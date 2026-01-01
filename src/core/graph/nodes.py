@@ -1,5 +1,9 @@
 from typing import Dict
+import logging
 from src.core.graph.state import GEOState
+from src.core.services.llm.question_generator import generate_questions
+
+logger = logging.getLogger(__name__)
 
 
 def question_generator_node(state: GEOState) -> Dict:
@@ -8,14 +12,27 @@ def question_generator_node(state: GEOState) -> Dict:
     
     This node generates questions that typical users would ask about the brand,
     which will be used to search and analyze brand visibility.
+    
+    Uses the question_generator service to generate realistic questions via LLM.
     """
-    # TODO: Implement question generation with LLM
-    # For now, hardcoded questions for testing
-    state["questions"] = [
-        f"What are the best {state['brand']} products?",
-        f"Who are the leaders in the {state['brand']} market?",
-        f"What brands are recommended in the {state['brand']} sector?"
-    ]
+    try:
+        brand = state["brand"]
+        logger.info(f"Generating questions for brand: {brand}")
+        
+        # Generate questions using the service
+        questions = generate_questions(brand, num_questions=5)
+        
+        state["questions"] = questions
+        logger.info(f"Generated {len(questions)} questions")
+        
+    except Exception as e:
+        error_msg = f"Failed to generate questions: {str(e)}"
+        logger.error(error_msg)
+        state["errors"].append(error_msg)
+        state["llm_errors"].append(error_msg)
+        # Fallback to empty list if generation fails
+        state["questions"] = []
+    
     return state
 
 
