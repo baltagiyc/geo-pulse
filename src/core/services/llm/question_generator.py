@@ -23,7 +23,7 @@ class QuestionsResponse(BaseModel):
     """
     questions: List[str] = Field(
         description="List of realistic questions about the brand that a typical user would ask",
-        min_items=3,
+        min_items=2,
         max_items=10
     )
 
@@ -32,7 +32,7 @@ class QuestionsResponse(BaseModel):
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=10)
 )
-def generate_questions(brand: str, num_questions: int = 5) -> List[str]:
+def generate_questions(brand: str, num_questions: int = 2) -> List[str]:
     """
     Generate realistic questions about a brand using LLM.
     
@@ -41,7 +41,7 @@ def generate_questions(brand: str, num_questions: int = 5) -> List[str]:
     
     Args:
         brand: Name of the brand to generate questions about (e.g., "Nike", "Brevo")
-        num_questions: Number of questions to generate (default: 5, will be used as guidance)
+        num_questions: Number of questions to generate (default: 2, will be used as guidance)
     
     Returns:
         List of questions (List[str])

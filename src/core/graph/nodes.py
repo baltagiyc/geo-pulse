@@ -1,7 +1,8 @@
 from typing import Dict
 import logging
-from src.core.graph.state import GEOState
+from src.core.graph.state import GEOState, SearchResult
 from src.core.services.llm.question_generator import generate_questions
+from src.core.services.llm.llm_simulator import simulate_llm_response
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ def question_generator_node(state: GEOState) -> Dict:
         logger.info(f"Generating questions for brand: {brand}")
         
         # Generate questions using the service
-        questions = generate_questions(brand, num_questions=5)
+        questions = generate_questions(brand, num_questions=2)
         
         state["questions"] = questions
         logger.info(f"Generated {len(questions)} questions")
@@ -40,22 +41,41 @@ def search_executor_node(state: GEOState) -> Dict:
     """
     Node 2: Execute web searches for each question.
     
-    This node calls search engines (Tavily/Bing) for each question,
-    structures the results, and handles errors with retry logic.
+    This node calls Tavily search API for each question,
+    structures the results with SearchResult Pydantic model,
+    and handles errors with retry logic.
     """
-    # TODO: Implement search calls with Tavily/Bing
-    # TODO: Add retry logic and error handling
-    # TODO: Structure results with SearchResult Pydantic model
+    from src.core.services.search.tavily_service import search_with_tavily
     
-    # Initialize search_results if not exists
+    # Initialize search_results and errors
     if "search_results" not in state:
         state["search_results"] = {}
     
-    # For now, empty results for testing
-    for question in state.get("questions", []):
-        state["search_results"][question] = []
+    if "search_errors" not in state:
+        state["search_errors"] = []
     
-    state["search_errors"] = []
+    # Search for each question
+    for question in state.get("questions", []):
+        try:
+            logger.info(f"Searching for question: {question}")
+            
+            # Execute search with Tavily
+            results = search_with_tavily(question, max_results=5)
+            
+            # Convert SearchResult objects to dicts for State storage
+            state["search_results"][question] = [
+                result.model_dump() for result in results
+            ]
+            
+            logger.info(f"Found {len(results)} results for question: {question}")
+            
+        except Exception as e:
+            error_msg = f"Failed to search '{question}': {str(e)}"
+            logger.error(error_msg)
+            state["search_errors"].append(error_msg)
+            # Set empty results for this question if search fails
+            state["search_results"][question] = []
+    
     return state
 
 
@@ -65,20 +85,65 @@ def llm_simulator_node(state: GEOState) -> Dict:
     
     This node simulates the chosen LLM (ChatGPT, Gemini, etc.) by generating
     responses based on the search results, using with_structured_output for LLMResponse.
-    """
-    # TODO: Implement LLM simulation with with_structured_output
-    # TODO: Use the llm_provider from state to choose the right LLM
-    # TODO: Generate LLMResponse with structured output
     
-    # Initialize llm_responses if not exists
+    For each question:
+    1. Retrieves search_results from state (as dicts)
+    2. Converts dicts to SearchResult objects
+    3. Calls simulate_llm_response() to generate LLM response
+    4. Stores LLMResponse as dict in state
+    """
+    # Initialize llm_responses and errors if not exists
     if "llm_responses" not in state:
         state["llm_responses"] = {}
     
-    # For now, empty responses for testing
-    for question in state.get("questions", []):
-        state["llm_responses"][question] = {}
+    if "llm_errors" not in state:
+        state["llm_errors"] = []
     
-    state["llm_errors"] = []
+    # Get llm_provider and brand from state
+    llm_provider = state.get("llm_provider", "gpt-4")
+    brand = state.get("brand", "")
+    
+    # Simulate LLM response for each question
+    for question in state.get("questions", []):
+        try:
+            logger.info(f"Simulating LLM response for question: {question}")
+            
+            # Get search_results for this question (stored as dicts in state)
+            search_results_dicts = state.get("search_results", {}).get(question, [])
+            
+            # Skip if no search results available
+            if not search_results_dicts:
+                logger.warning(f"No search results for question: {question}")
+                state["llm_responses"][question] = {}
+                continue
+            
+            # Convert dicts to SearchResult objects (revalidation)
+            search_results = [
+                SearchResult.model_validate(result_dict)
+                for result_dict in search_results_dicts
+            ]
+            
+            # Simulate LLM response using the service
+            llm_response = simulate_llm_response(
+                question=question,
+                search_results=search_results,
+                llm_provider=llm_provider,
+                brand=brand
+            )
+            
+            # Convert LLMResponse to dict for state storage
+            state["llm_responses"][question] = llm_response.model_dump()
+            
+            logger.info(f"Generated LLM response for question: {question[:50]}...")
+            logger.info(f"Response cites {len(llm_response.sources)} sources")
+            
+        except Exception as e:
+            error_msg = f"Failed to simulate LLM response for '{question}': {str(e)}"
+            logger.error(error_msg)
+            state["llm_errors"].append(error_msg)
+            # Set empty response for this question if simulation fails
+            state["llm_responses"][question] = {}
+    
     return state
 
 

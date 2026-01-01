@@ -66,15 +66,47 @@ def test_graph_structure():
     else:
         print("   ❌ questions not filled")
     
-    # Check search_results (should be initialized by search_executor_node)
+    # Check search_results (should be filled by search_executor_node)
     if "search_results" in result:
         print(f"   ✅ search_results initialized: {len(result['search_results'])} entries")
+        # Show search results if available
+        if result['search_results']:
+            print(f"      First question results: {len(result['search_results'].get(list(result['search_results'].keys())[0], []))} results")
+            # Show first result details
+            first_question = list(result['search_results'].keys())[0]
+            first_results = result['search_results'][first_question]
+            if first_results:
+                print(f"      Example result: {first_results[0].get('title', 'N/A')[:50]}...")
     else:
         print("   ❌ search_results not initialized")
+    
+    # Check search_errors
+    if "search_errors" in result:
+        if result['search_errors']:
+            print(f"   ⚠️  search_errors: {len(result['search_errors'])} errors")
+            for error in result['search_errors'][:3]:  # Show first 3 errors
+                print(f"      - {error[:60]}...")
+        else:
+            print("   ✅ No search errors")
     
     # Check llm_responses (should be initialized by llm_simulator_node)
     if "llm_responses" in result:
         print(f"   ✅ llm_responses initialized: {len(result['llm_responses'])} entries")
+        if result['llm_responses']:
+            # Show ALL LLM responses with full content
+            print(f"\n   📝 LLM RESPONSES (Full Content):")
+            print(f"   {'='*70}")
+            for i, (question, response) in enumerate(result['llm_responses'].items(), 1):
+                if response:
+                    print(f"\n   Question {i}: {question}")
+                    print(f"   {'-'*70}")
+                    print(f"   LLM: {response.get('llm_name', 'N/A')}")
+                    print(f"   Response ({len(response.get('response', ''))} chars):")
+                    print(f"   {response.get('response', 'N/A')}")
+                    print(f"\n   Sources cited ({len(response.get('sources', []))} URLs):")
+                    for j, source in enumerate(response.get('sources', []), 1):
+                        print(f"      {j}. {source}")
+                    print(f"   {'='*70}")
     else:
         print("   ❌ llm_responses not initialized")
     
