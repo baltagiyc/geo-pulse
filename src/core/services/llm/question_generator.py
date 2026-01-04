@@ -74,6 +74,8 @@ These questions should be:
 - Questions that users would actually type into search engines or AI assistants
 - Include comparisons with competitors from the same industry
 
+IMPORTANT: One and only one of the questions MUST be a comprehensive, exhaustive question about the brand's negative aspects, weaknesses, complaints, or criticisms. This question should be formulated to get a detailed, in-depth analysis of what users, customers, or experts say are the main problems, drawbacks, or negative points about {brand}. Make it natural and realistic, like a real user would ask when doing thorough research.
+
 Brand: {brand}
 
 Generate questions that sound like real user queries, not marketing questions.

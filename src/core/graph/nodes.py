@@ -3,6 +3,7 @@ import logging
 from src.core.graph.state import GEOState, SearchResult
 from src.core.services.llm.question_generator import generate_questions
 from src.core.services.llm.llm_simulator import simulate_llm_response
+from src.core.services.analysis.analyst_service import analyze_brand_visibility
 
 logger = logging.getLogger(__name__)
 
@@ -153,13 +154,51 @@ def response_analyst_node(state: GEOState) -> Dict:
     
     This node analyzes the LLM responses to calculate the reputation score
     and generate recommendations to improve brand visibility.
-    """
-    # TODO: Implement analysis logic
-    # TODO: Calculate reputation_score based on brand mentions
-    # TODO: Generate recommendations using Recommendation Pydantic model
     
-    # For now, default values for testing
-    state["reputation_score"] = 0.0
-    state["recommendations"] = []
+    Uses the analyst_service to:
+    1. Analyze negative responses (weaknesses, criticisms)
+    2. Identify preferred competitors and reasons
+    3. Analyze sources/domains most cited (SEO/GEO opportunities)
+    4. Calculate overall reputation score (0.0 to 1.0)
+    5. Generate actionable recommendations
+    """
+    try:
+        brand = state.get("brand", "")
+        questions = state.get("questions", [])
+        llm_responses = state.get("llm_responses", {})
+        search_results = state.get("search_results", {})
+        
+        logger.info(f"Analyzing brand visibility for: {brand}")
+        
+        # Skip analysis if no data available
+        if not questions or not llm_responses:
+            logger.warning("Insufficient data for analysis. Using default values.")
+            state["reputation_score"] = 0.0
+            state["recommendations"] = []
+            return state
+        
+        # Analyze brand visibility using the service
+        reputation_score, recommendations = analyze_brand_visibility(
+            brand=brand,
+            questions=questions,
+            llm_responses=llm_responses,
+            search_results=search_results
+        )
+        
+        # Store results in state
+        state["reputation_score"] = reputation_score
+        state["recommendations"] = [
+            rec.model_dump() for rec in recommendations
+        ]
+        
+        logger.info(f"Analysis complete. Score: {reputation_score}, Recommendations: {len(recommendations)}")
+        
+    except Exception as e:
+        error_msg = f"Failed to analyze brand visibility: {str(e)}"
+        logger.error(error_msg)
+        state["errors"].append(error_msg)
+        # Set default values on error
+        state["reputation_score"] = 0.0
+        state["recommendations"] = []
     
     return state

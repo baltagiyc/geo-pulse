@@ -38,7 +38,7 @@ def test_graph_structure():
     # 2. Test initial state creation
     print("\n2. Creating initial state...")
     try:
-        initial_state = create_initial_state(brand="Nike", llm_provider="gpt-4")
+        initial_state = create_initial_state(brand="Brevo", llm_provider="gpt-4")
         print(f"   ✅ Initial state created")
         print(f"      - brand: {initial_state['brand']}")
         print(f"      - llm_provider: {initial_state['llm_provider']}")
@@ -112,9 +112,27 @@ def test_graph_structure():
     
     # Check reputation_score (should be set by response_analyst_node)
     if "reputation_score" in result:
-        print(f"   ✅ reputation_score set: {result['reputation_score']}")
+        score = result['reputation_score']
+        print(f"   ✅ reputation_score set: {score:.2f}/1.0")
+        if score > 0.0:
+            print(f"      🎉 Analysis completed successfully!")
     else:
         print("   ❌ reputation_score not set")
+    
+    # Check recommendations (should be set by response_analyst_node)
+    if "recommendations" in result:
+        recommendations = result['recommendations']
+        print(f"   ✅ recommendations set: {len(recommendations)} recommendations")
+        if recommendations:
+            print(f"\n   💡 RECOMMENDATIONS:")
+            print(f"   {'='*70}")
+            for i, rec in enumerate(recommendations[:5], 1):  # Show first 5
+                priority_emoji = "🔴" if rec.get('priority') == 'high' else "🟡" if rec.get('priority') == 'medium' else "🟢"
+                print(f"   {i}. {priority_emoji} {rec.get('title', 'N/A')} [{rec.get('priority', 'N/A')} priority]")
+                print(f"      {rec.get('description', 'N/A')[:80]}...")
+            print(f"   {'='*70}")
+    else:
+        print("   ❌ recommendations not set")
     
     print("\n" + "-" * 50)
     print("🎉 Graph structure test completed!")
