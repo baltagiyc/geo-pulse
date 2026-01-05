@@ -1,0 +1,23 @@
+# Pre-commit hooks configuration
+# These hooks run automatically before each commit
+
+repos:
+  # Ruff: Fast Python linter and formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix, --ignore=E402]  # Auto-fix issues, ignore E402 (imports after sys.path)
+      - id: ruff-format  # Check formatting
+
+  # Detect secrets: Prevents committing secrets (API keys, passwords, etc.)
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package.lock.json
+
+  # Note: Bandit is run in GitHub Actions CI/CD, not in pre-commit
+  # (easier to configure there)
+

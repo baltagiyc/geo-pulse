@@ -5,14 +5,14 @@ Analyzes LLM responses to calculate reputation score and generate recommendation
 Uses LLM to analyze responses, identify weaknesses, competitors, and SEO opportunities.
 """
 
-import os
 import logging
-from typing import List, Dict, Tuple
-from pydantic import BaseModel, Field
+import os
+
 from langchain_openai import ChatOpenAI
+from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from src.core.graph.state import LLMResponse, Recommendation, SearchResult
+from src.core.graph.state import Recommendation, SearchResult
 
 logger = logging.getLogger(__name__)
 
@@ -21,25 +21,19 @@ class AnalysisResponse(BaseModel):
     """
     Response from the analysis LLM containing score and recommendations.
     """
-    reputation_score: float = Field(
-        description="Overall reputation score from 0.0 to 1.0",
-        ge=0.0,
-        le=1.0
-    )
-    recommendations: List[Recommendation] = Field(
-        description="List of recommendations to improve brand visibility",
-        default=[]
+
+    reputation_score: float = Field(description="Overall reputation score from 0.0 to 1.0", ge=0.0, le=1.0)
+    recommendations: list[Recommendation] = Field(
+        description="List of recommendations to improve brand visibility", default=[]
     )
 
 
 def _format_llm_responses_for_analysis(
-    questions: List[str],
-    llm_responses: Dict[str, Dict],
-    search_results: Dict[str, List[Dict]]
+    questions: list[str], llm_responses: dict[str, dict], search_results: dict[str, list[dict]]
 ) -> str:
     """
     Format LLM responses for the analysis prompt.
-    
+
     Converts the state's llm_responses dict into a readable format for the LLM.
     Includes all available search results and highlights which ones were cited.
     """
@@ -47,41 +41,38 @@ def _format_llm_responses_for_analysis(
     for i, question in enumerate(questions, 1):
         response_dict = llm_responses.get(question, {})
         search_results_list = search_results.get(question, [])
-        
-        # Get sources cited by LLM
-        sources_cited = response_dict.get('sources', [])
-        
-        # Convert search results to SearchResult objects and extract domains
+
+        # sources cited by LLM are different than sources founded by tavily
+        # the sources not cited by the LLM have the potential to improve the visibility later (will see soon)
+        sources_cited = response_dict.get("sources", [])
+
+        # need to extract the pydantic model first
         available_domains = []
         for result_dict in search_results_list:
             try:
                 search_result = SearchResult.model_validate(result_dict)
-                available_domains.append({
-                    'domain': search_result.domain,
-                    'url': search_result.url,
-                    'title': search_result.title
-                })
+                available_domains.append(
+                    {"domain": search_result.domain, "url": search_result.url, "title": search_result.title}
+                )
             except Exception:
-                # Skip invalid results
                 continue
-        
+
         # Separate cited vs non-cited domains
-        cited_domains = [d for d in available_domains if d['url'] in sources_cited]
-        non_cited_domains = [d for d in available_domains if d['url'] not in sources_cited]
-        
-        # Format the question section
+        cited_domains = [d for d in available_domains if d["url"] in sources_cited]
+        non_cited_domains = [d for d in available_domains if d["url"] not in sources_cited]
+
         section = f"Question {i}: {question}\n"
-        
+
         if response_dict:
             section += f"LLM Response: {response_dict.get('response', 'N/A')}\n\n"
-            
+
             # Sources cited by LLM (HIGH IMPACT - emphasized)
             if cited_domains:
                 section += "✅ SOURCES CITED BY LLM (High Impact):\n"
                 for domain_info in cited_domains:
                     section += f"   - {domain_info['domain']} ({domain_info['url']})\n"
                 section += "\n"
-            
+
             # Available sources NOT cited (SEO/GEO opportunities)
             if non_cited_domains:
                 section += "📊 AVAILABLE SOURCES NOT CITED (SEO/GEO Opportunities):\n"
@@ -90,18 +81,16 @@ def _format_llm_responses_for_analysis(
                 section += "\n"
         else:
             section += "(No response available)\n"
-        
+
         formatted.append(section)
-    
+
     return "\n".join(formatted)
 
 
-def _extract_domains_from_sources(
-    search_results: Dict[str, List[Dict]]
-) -> Dict[str, int]:
+def _extract_domains_from_sources(search_results: dict[str, list[dict]]) -> dict[str, int]:
     """
     Extract and count domain occurrences from search results.
-    
+
     Uses SearchResult Pydantic model to validate and extract domain.
     Returns a dict mapping domain to count of occurrences.
     """
@@ -109,46 +98,38 @@ def _extract_domains_from_sources(
     for question, results in search_results.items():
         for result_dict in results:
             try:
-                # Validate dict as SearchResult to use .domain directly
                 search_result = SearchResult.model_validate(result_dict)
                 if search_result.domain:
                     domain_counts[search_result.domain] = domain_counts.get(search_result.domain, 0) + 1
             except Exception:
-                # Skip invalid results
                 continue
-    
+
     return domain_counts
 
 
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=2, max=10)
-)
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def analyze_brand_visibility(
-    brand: str,
-    questions: List[str],
-    llm_responses: Dict[str, Dict],
-    search_results: Dict[str, List[Dict]]
-) -> Tuple[float, List[Recommendation]]:
+    brand: str, questions: list[str], llm_responses: dict[str, dict], search_results: dict[str, list[dict]]
+) -> tuple[float, list[Recommendation]]:
     """
     Analyze brand visibility based on LLM responses.
-    
+
     This function uses an LLM to:
     1. Analyze negative responses (weaknesses, criticisms)
     2. Identify preferred competitors and reasons
     3. Analyze sources/domains most cited (SEO/GEO opportunities)
     4. Calculate overall reputation score (0.0 to 1.0)
     5. Generate actionable recommendations
-    
+
     Args:
         brand: Name of the brand being audited
         questions: List of questions asked
         llm_responses: Dict mapping question to LLMResponse dict
         search_results: Dict mapping question to list of SearchResult dicts
-    
+
     Returns:
         Tuple of (reputation_score: float, recommendations: List[Recommendation])
-    
+
     Raises:
         ValueError: If API key is missing
         Exception: If LLM call fails after retries
@@ -156,27 +137,22 @@ def analyze_brand_visibility(
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise ValueError("OPENAI_API_KEY not found in environment variables")
-    
+
     try:
-        # Initialize LLM
         llm = ChatOpenAI(
             model="gpt-4",
             temperature=0.3,  # Lower temperature for more consistent analysis
-            api_key=api_key
+            api_key=api_key,
         )
-        
-        # Use structured output to guarantee AnalysisResponse format
+
         structured_llm = llm.with_structured_output(AnalysisResponse)
-        
-        # Format data for prompt
+
         formatted_responses = _format_llm_responses_for_analysis(questions, llm_responses, search_results)
         domain_counts = _extract_domains_from_sources(search_results)
-        
-        # Format domain analysis
+
         top_domains = sorted(domain_counts.items(), key=lambda x: x[1], reverse=True)[:10]
         domains_text = "\n".join([f"- {domain}: {count} mentions" for domain, count in top_domains])
-        
-        # Build comprehensive analysis prompt
+
         prompt = f"""You are a GEO (Generative Engine Optimization) visibility analyst. Your goal is to help {brand} improve its VISIBILITY in AI/LLM responses (ChatGPT, Gemini, etc.), NOT to improve the product itself.
 
 IMPORTANT CONTEXT:
@@ -195,7 +171,7 @@ TOP DOMAINS/SOURCES CITED:
 
 ANALYSIS REQUIREMENTS:
 
-1. **Focus on Negative Responses (Transform to Content Opportunities)**: 
+1. **Focus on Negative Responses (Transform to Content Opportunities)**:
    - Identify the question(s) about negative aspects, weaknesses, or criticisms
    - Extract all negative points mentioned
    - TRANSFORM these into CONTENT OPPORTUNITIES, not product fixes
@@ -240,16 +216,14 @@ ANALYSIS REQUIREMENTS:
 
 Provide a comprehensive analysis with a justified score and actionable recommendations."""
 
-        # Call LLM with structured output
         response = structured_llm.invoke(prompt)
-        
+
         logger.info(f"Analysis completed for brand: {brand}")
         logger.info(f"Reputation score: {response.reputation_score}")
         logger.info(f"Generated {len(response.recommendations)} recommendations")
-        
+
         return response.reputation_score, response.recommendations
-        
+
     except Exception as e:
         logger.error(f"Failed to analyze brand visibility for '{brand}': {str(e)}")
         raise
-
