@@ -1,6 +1,3 @@
-# Pre-commit hooks configuration
-# These hooks run automatically before each commit
-
 repos:
   # Ruff: Fast Python linter and formatter
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -18,6 +15,4 @@ repos:
         args: ['--baseline', '.secrets.baseline']
         exclude: package.lock.json
 
-  # Note: Bandit is run in GitHub Actions CI/CD, not in pre-commit
-  # (easier to configure there)
 

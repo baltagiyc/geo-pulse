@@ -140,11 +140,11 @@ def test_analyze_brand_visibility_real_api():
         print("======================================================================")
         print(f"\n📊 Reputation Score: {score:.2f}/1.0")
         print(f"\n💡 Recommendations ({len(recommendations)}):")
-        print(f"   {'='*70}")
+        print(f"   {'=' * 70}")
         for i, rec in enumerate(recommendations, 1):
             print(f"\n   {i}. {rec.title} [{rec.priority.upper()} priority]")
             print(f"      {rec.description}")
-        print(f"\n   {'='*70}")
+        print(f"\n   {'=' * 70}")
         print("\n======================================================================")
         print("✅ Integration test passed!")
         print("======================================================================")
