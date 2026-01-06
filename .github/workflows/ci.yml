@@ -7,7 +7,6 @@ on:
     branches: [main]  # PRs vers main
 
 jobs:
-  # Tests unitaires
   test:
     name: Run Unit Tests
     runs-on: ubuntu-latest

@@ -97,18 +97,18 @@ def test_graph_structure():
         if result["llm_responses"]:
             # Show ALL LLM responses with full content
             print("\n   📝 LLM RESPONSES (Full Content):")
-            print(f"   {'='*70}")
+            print(f"   {'=' * 70}")
             for i, (question, response) in enumerate(result["llm_responses"].items(), 1):
                 if response:
                     print(f"\n   Question {i}: {question}")
-                    print(f"   {'-'*70}")
+                    print(f"   {'-' * 70}")
                     print(f"   LLM: {response.get('llm_name', 'N/A')}")
                     print(f"   Response ({len(response.get('response', ''))} chars):")
                     print(f"   {response.get('response', 'N/A')}")
                     print(f"\n   Sources cited ({len(response.get('sources', []))} URLs):")
                     for j, source in enumerate(response.get("sources", []), 1):
                         print(f"      {j}. {source}")
-                    print(f"   {'='*70}")
+                    print(f"   {'=' * 70}")
     else:
         print("   ❌ llm_responses not initialized")
 
@@ -127,14 +127,14 @@ def test_graph_structure():
         print(f"   ✅ recommendations set: {len(recommendations)} recommendations")
         if recommendations:
             print("\n   💡 RECOMMENDATIONS:")
-            print(f"   {'='*70}")
+            print(f"   {'=' * 70}")
             for i, rec in enumerate(recommendations[:5], 1):  # Show first 5
                 priority_emoji = (
                     "🔴" if rec.get("priority") == "high" else "🟡" if rec.get("priority") == "medium" else "🟢"
                 )
                 print(f"   {i}. {priority_emoji} {rec.get('title', 'N/A')} [{rec.get('priority', 'N/A')} priority]")
                 print(f"      {rec.get('description', 'N/A')[:80]}...")
-            print(f"   {'='*70}")
+            print(f"   {'=' * 70}")
     else:
         print("   ❌ recommendations not set")
 
