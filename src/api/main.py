@@ -1,8 +1,11 @@
 """FastAPI application main file."""
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 
-from src.api.routes import health
+from src.api.routes import debug, health
+
+load_dotenv()
 
 app = FastAPI(
     title="GEO Pulse API",
@@ -11,4 +14,5 @@ app = FastAPI(
 )
 
 # Include routers
-app.include_router(health.router)
+app.include_router(health.router, prefix="/api")
+app.include_router(debug.router, prefix="/api")
