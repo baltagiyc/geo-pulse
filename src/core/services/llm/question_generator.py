@@ -6,11 +6,11 @@ Simulates a real user searching for information about the brand.
 """
 
 import logging
-import os
 
-from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
+
+from src.core.services.llm.llm_factory import create_llm
 
 logger = logging.getLogger(__name__)
 
@@ -24,13 +24,13 @@ class QuestionsResponse(BaseModel):
 
     questions: list[str] = Field(
         description="List of realistic questions about the brand that a typical user would ask",
-        min_items=2,
-        max_items=10,
+        min_length=2,
+        max_length=10,
     )
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
-def generate_questions(brand: str, num_questions: int = 2) -> list[str]:
+def generate_questions(brand: str, num_questions: int = 2, question_llm: str = "openai:gpt-4o-mini") -> list[str]:
     """
     Generate realistic questions about a brand using LLM.
 
@@ -40,20 +40,17 @@ def generate_questions(brand: str, num_questions: int = 2) -> list[str]:
     Args:
         brand: Name of the brand to generate questions about (e.g., "Nike", "Brevo")
         num_questions: Number of questions to generate (default: 2, will be used as guidance)
+        question_llm: LLM specification in format "provider:model" (default: "openai:gpt-4o-mini")
 
     Returns:
         List of questions (List[str])
 
     Raises:
-        ValueError: If API key is missing
+        ValueError: If provider is not supported or API key is missing
         Exception: If LLM call fails after retries
     """
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY not found in environment variables")
-
     try:
-        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, api_key=api_key)
+        llm = create_llm(question_llm, temperature=0.7)
 
         structured_llm = llm.with_structured_output(QuestionsResponse)
 

@@ -44,8 +44,8 @@ def test_questions_response_model():
         assert True
 
 
-@patch("src.core.services.llm.question_generator.ChatOpenAI")
-def test_generate_questions_with_mock(mock_chat_openai):
+@patch("src.core.services.llm.question_generator.create_llm")
+def test_generate_questions_with_mock(mock_create_llm):
     """
     Test question generation with mocked LLM (for CI/CD).
 
@@ -68,9 +68,9 @@ def test_generate_questions_with_mock(mock_chat_openai):
     )
     mock_structured_llm.invoke.return_value = mock_response
 
-    # Mock the chain: ChatOpenAI() -> with_structured_output() -> invoke()
+    # Mock the chain: create_llm() -> with_structured_output() -> invoke()
     mock_llm_instance.with_structured_output.return_value = mock_structured_llm
-    mock_chat_openai.return_value = mock_llm_instance
+    mock_create_llm.return_value = mock_llm_instance
 
     # Mock API key
     with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}):
@@ -84,7 +84,7 @@ def test_generate_questions_with_mock(mock_chat_openai):
     assert "Nike" in questions[0]
 
     # Verify LLM was called correctly
-    mock_chat_openai.assert_called_once()
+    mock_create_llm.assert_called_once_with("openai:gpt-4o-mini", temperature=0.7)
     mock_structured_llm.invoke.assert_called_once()
 
 
