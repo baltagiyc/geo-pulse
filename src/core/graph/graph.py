@@ -17,11 +17,16 @@ def create_initial_state(brand: str, llm_provider: str = "gpt-4") -> GEOState:
     Create an initial state for the GEO audit graph.
 
     The user only needs to provide brand and llm_provider.
-    All other fields are initialized with default values.
+    The search tool is automatically determined from llm_provider (future feature).
+    For now, we use Tavily as default for all LLMs.
 
     Args:
         brand: Name of the brand to audit (e.g., "Nike", "Brevo", "Amazon")
         llm_provider: LLM provider to simulate (e.g., "gpt-4", "gemini", "perplexity")
+                     Future: will automatically map to correct search tool:
+                     - chatgpt/gpt-4 -> bing
+                     - gemini -> google
+                     - perplexity -> perplexity (special case)
 
     Returns:
         Initialized GEOState with all required fields

@@ -61,6 +61,8 @@ class GEOState(TypedDict):
     llm_provider: (
         str  # LLM where we wanna checke the visibility: "chatgpt", "gemini", "perplexity", etc. (default: "gpt-4")
     )
+    # Note: search_tool is automatically determined from llm_provider (e.g., chatgpt -> bing, gemini -> google)
+    # For now, we use Tavily as default for all LLMs. Future: implement proper LLM -> Search Tool mapping
 
     # to be changed by the nodes
     questions: list[str]  # first agent will generated tyicals questions that any user can ask about the brand

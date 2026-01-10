@@ -89,7 +89,6 @@ def search_with_tavily(query: str, max_results: int = 5) -> list[SearchResult]:
         raise ValueError("TAVILY_API_KEY not found in environment variables")
 
     try:
-        # Initialize Tavily search client
         search = TavilySearch(tavily_api_key=api_key, max_results=max_results)
 
         # Execute search
@@ -105,7 +104,6 @@ def search_with_tavily(query: str, max_results: int = 5) -> list[SearchResult]:
                 search_result = _transform_tavily_result(result)
                 validated_results.append(search_result)
             except Exception as e:
-                # Skip invalid results but log the error
                 logger.warning(f"Skipping invalid search result: {str(e)}")
                 continue
 

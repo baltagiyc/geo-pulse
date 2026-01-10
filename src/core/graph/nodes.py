@@ -42,11 +42,15 @@ def search_executor_node(state: GEOState) -> dict:
     """
     Node 2: Execute web searches for each question.
 
-    This node calls Tavily search API for each question,
-    structures the results with SearchResult Pydantic model,
+    This node uses the search factory to execute searches.
+    Currently uses Tavily as default for all LLMs.
+    Future: will automatically select the correct search tool based on llm_provider
+    (e.g., chatgpt -> bing, gemini -> google, perplexity -> perplexity).
+
+    Structures the results with SearchResult Pydantic model,
     and handles errors with retry logic.
     """
-    from src.core.services.search.tavily_service import search_with_tavily
+    from src.core.services.search.search_factory import create_search_tool, get_search_tool_for_llm
 
     # Initialize search_results and errors
     if "search_results" not in state:
@@ -55,13 +59,20 @@ def search_executor_node(state: GEOState) -> dict:
     if "search_errors" not in state:
         state["search_errors"] = []
 
+    # Automatically determine search tool from llm_provider
+    # This ensures we use the correct search tool for each LLM (e.g., chatgpt -> bing, gemini -> google)
+    # For now, returns "tavily" for all LLMs as default
+    llm_provider = state.get("llm_provider", "gpt-4")
+    search_tool_spec = get_search_tool_for_llm(llm_provider)
+    search_function = create_search_tool(search_tool_spec)
+
     # Search for each question
     for question in state.get("questions", []):
         try:
-            logger.info(f"Searching for question: {question}")
+            logger.info(f"Searching for question: {question} using {search_tool_spec}")
 
-            # Execute search with Tavily
-            results = search_with_tavily(question, max_results=5)
+            # Execute search with the configured tool
+            results = search_function(question, max_results=5)
 
             # Convert SearchResult objects to dicts for State storage
             state["search_results"][question] = [result.model_dump() for result in results]
