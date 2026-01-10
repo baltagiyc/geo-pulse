@@ -2,9 +2,14 @@
 
 from pydantic import BaseModel, Field
 
+# ============================================================================
+# DEBUG ENDPOINTS - Request Schemas
+# ============================================================================
 
+
+# Endpoint: POST /api/questions/generate
 class QuestionGenerateRequest(BaseModel):
-    """Request schema for question generation endpoint."""
+    """Request schema for question generation endpoint (debug)."""
 
     brand: str = Field(description="Name of the brand to generate questions for")
     num_questions: int = Field(default=2, ge=1, le=10, description="Number of questions to generate (1-10)")
@@ -14,6 +19,7 @@ class QuestionGenerateRequest(BaseModel):
     )
 
 
+# Endpoint: POST /api/search/execute
 class SearchExecuteRequest(BaseModel):
     """Request schema for search execution endpoint (debug)."""
 
