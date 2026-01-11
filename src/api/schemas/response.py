@@ -2,6 +2,8 @@
 
 from pydantic import BaseModel, Field
 
+from src.core.graph.state import LLMResponse
+
 # ============================================================================
 # HEALTH ENDPOINT - Response Schema
 # ============================================================================
@@ -47,3 +49,13 @@ class SearchExecuteResponse(BaseModel):
     query: str = Field(description="Search query that was executed")
     search_tool: str = Field(description="Search tool that was used")
     num_results: int = Field(description="Number of results returned")
+
+
+# Endpoint: POST /api/llm/simulate
+class LLMSimulateResponse(BaseModel):
+    """Response schema for LLM simulation endpoint (debug)."""
+
+    llm_response: LLMResponse = Field(description="The simulated LLM response with sources")
+    question: str = Field(description="The question that was simulated")
+    llm_spec: str = Field(description="The LLM specification that was used for simulation")
+    brand: str = Field(description="The brand name used for context (if provided)")
