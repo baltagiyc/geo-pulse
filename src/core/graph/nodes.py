@@ -131,10 +131,15 @@ def llm_simulator_node(state: GEOState) -> dict:
             search_results = [SearchResult.model_validate(result_dict) for result_dict in search_results_dicts]
 
             # Simulate LLM response using the service
+            # Convert llm_provider to factory format (e.g., "gpt-4" -> "openai:gpt-4")
+            # simulate_llm_response() accepts both formats, but we convert for consistency
+            from src.core.services.llm.llm_factory import get_simulation_llm_for_provider
+
+            llm_spec = get_simulation_llm_for_provider(llm_provider)
             llm_response = simulate_llm_response(
                 question=question,
                 search_results=search_results,
-                llm_provider=llm_provider,
+                llm_spec=llm_spec,
                 brand=brand,
             )
 

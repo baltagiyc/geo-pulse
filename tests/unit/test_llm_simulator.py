@@ -52,8 +52,8 @@ def test_format_search_results_empty():
     assert formatted == "No search results available."
 
 
-@patch("src.core.services.llm.llm_simulator.ChatOpenAI")
-def test_simulate_llm_response_with_mock(mock_chat_openai):
+@patch("src.core.services.llm.llm_simulator.create_llm")
+def test_simulate_llm_response_with_mock(mock_create_llm):
     """
     Test LLM simulation with mocked LLM (for CI/CD).
 
@@ -71,9 +71,9 @@ def test_simulate_llm_response_with_mock(mock_chat_openai):
     )
     mock_structured_llm.invoke.return_value = mock_response
 
-    # Mock the chain: ChatOpenAI() -> with_structured_output() -> invoke()
+    # Mock the chain: create_llm() -> with_structured_output() -> invoke()
     mock_llm_instance.with_structured_output.return_value = mock_structured_llm
-    mock_chat_openai.return_value = mock_llm_instance
+    mock_create_llm.return_value = mock_llm_instance
 
     # Prepare test data
     search_results = [
@@ -90,7 +90,7 @@ def test_simulate_llm_response_with_mock(mock_chat_openai):
         result = simulate_llm_response(
             question="What are the best Nike products?",
             search_results=search_results,
-            llm_provider="gpt-4",
+            llm_spec="openai:gpt-4",  # Use factory format
             brand="Nike",
         )
 
@@ -102,16 +102,13 @@ def test_simulate_llm_response_with_mock(mock_chat_openai):
     assert "https://www.nike.com" in result.sources
 
     # Verify LLM was called correctly
-    mock_chat_openai.assert_called_once()
+    # Note: llm_spec="openai:gpt-4" is passed directly, so factory is called with that
+    mock_create_llm.assert_called_once_with(llm_spec="openai:gpt-4", temperature=0.7)
     mock_structured_llm.invoke.assert_called_once()
 
-    # Verify temperature is set to 0.7
-    call_args = mock_chat_openai.call_args
-    assert call_args.kwargs["temperature"] == 0.7
 
-
-@patch("src.core.services.llm.llm_simulator.ChatOpenAI")
-def test_simulate_llm_response_empty_results(mock_chat_openai):
+@patch("src.core.services.llm.llm_simulator.create_llm")
+def test_simulate_llm_response_empty_results(mock_create_llm):
     """Test that empty search results are handled correctly."""
     mock_llm_instance = MagicMock()
     mock_structured_llm = MagicMock()
@@ -123,13 +120,13 @@ def test_simulate_llm_response_empty_results(mock_chat_openai):
     )
     mock_structured_llm.invoke.return_value = mock_response
     mock_llm_instance.with_structured_output.return_value = mock_structured_llm
-    mock_chat_openai.return_value = mock_llm_instance
+    mock_create_llm.return_value = mock_llm_instance
 
     with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
         result = simulate_llm_response(
             question="What are the best Nike products?",
             search_results=[],
-            llm_provider="gpt-4",
+            llm_spec="openai:gpt-4",  # Use factory format
         )
 
     assert isinstance(result, LLMResponse)
