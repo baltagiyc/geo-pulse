@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, Field
 
-from src.core.graph.state import LLMResponse
+from src.core.graph.state import LLMResponse, Recommendation
 
 # ============================================================================
 # HEALTH ENDPOINT - Response Schema
@@ -45,7 +45,9 @@ class SearchResultResponse(BaseModel):
 class SearchExecuteResponse(BaseModel):
     """Response schema for search execution endpoint (debug)."""
 
-    results: list[SearchResultResponse] = Field(description="List of search results")
+    search_results: list[SearchResultResponse] = Field(
+        description="List of search results. This field can be copied directly to `/api/llm/simulate` endpoint."
+    )
     query: str = Field(description="Search query that was executed")
     search_tool: str = Field(description="Search tool that was used")
     num_results: int = Field(description="Number of results returned")
@@ -59,3 +61,15 @@ class LLMSimulateResponse(BaseModel):
     question: str = Field(description="The question that was simulated")
     llm_spec: str = Field(description="The LLM specification that was used for simulation")
     brand: str = Field(description="The brand name used for context (if provided)")
+
+
+# Endpoint: POST /api/analysis/analyze
+class AnalysisAnalyzeResponse(BaseModel):
+    """Response schema for analysis endpoint (debug, node 4)."""
+
+    reputation_score: float = Field(description="Overall reputation score from 0.0 to 1.0", ge=0.0, le=1.0)
+    recommendations: list[Recommendation] = Field(
+        description="List of recommendations to improve brand visibility (GEO-focused)."
+    )
+    brand: str = Field(description="Brand name that was analyzed")
+    num_questions_analyzed: int = Field(description="Number of questions that were included in the analysis")

@@ -3,6 +3,7 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
+from src.api.exceptions import setup_exception_handlers
 from src.api.routes import debug, health
 
 load_dotenv()
@@ -13,6 +14,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# Include routers
+setup_exception_handlers(app)
+
 app.include_router(health.router, prefix="/api")
 app.include_router(debug.router, prefix="/api")

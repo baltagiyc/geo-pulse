@@ -24,7 +24,7 @@ class QuestionsResponse(BaseModel):
 
     questions: list[str] = Field(
         description="List of realistic questions about the brand that a typical user would ask",
-        min_length=2,
+        min_length=1,
         max_length=10,
     )
 
