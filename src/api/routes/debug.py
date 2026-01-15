@@ -4,6 +4,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException, status
 
+from src.api.exceptions import format_error_message
 from src.api.schemas.request import (
     AnalysisAnalyzeRequest,
     LLMSimulateRequest,
@@ -63,17 +64,18 @@ async def generate_questions_endpoint(request: QuestionGenerateRequest) -> Quest
         )
 
     except ValueError as e:
-        logger.error(f"Invalid request for question generation: {str(e)}")
+        error_msg = format_error_message(e, "question generation")
+        logger.error(f"Invalid request for question generation: {error_msg}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid request: {str(e)}",
+            detail=error_msg,
         ) from e
     except Exception as e:
-        error_msg = str(e)
+        error_msg = format_error_message(e, "question generation")
         logger.error(f"Failed to generate questions for brand '{request.brand}': {error_msg}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate questions: {error_msg}",
+            detail=error_msg,
         ) from e
 
 
@@ -123,17 +125,18 @@ async def execute_search_endpoint(request: SearchExecuteRequest) -> SearchExecut
         )
 
     except ValueError as e:
-        logger.error(f"Invalid request for search execution: {str(e)}")
+        error_msg = format_error_message(e, "search execution")
+        logger.error(f"Invalid request for search execution: {error_msg}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid request: {str(e)}",
+            detail=error_msg,
         ) from e
     except Exception as e:
-        error_msg = str(e)
+        error_msg = format_error_message(e, "search execution")
         logger.error(f"Failed to execute search for query '{request.query}': {error_msg}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to execute search: {error_msg}",
+            detail=error_msg,
         ) from e
 
 
@@ -189,20 +192,21 @@ async def simulate_llm_endpoint(request: LLMSimulateRequest) -> LLMSimulateRespo
         )
 
     except ValueError as e:
-        logger.error(f"Invalid request for LLM simulation: {str(e)}")
+        error_msg = format_error_message(e, "LLM simulation")
+        logger.error(f"Invalid request for LLM simulation: {error_msg}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid request: {str(e)}",
+            detail=error_msg,
         ) from e
     except Exception as e:
-        error_msg = str(e)
+        error_msg = format_error_message(e, "LLM simulation")
         logger.error(
             f"Failed to simulate LLM response for question '{request.question[:50]}...': {error_msg}",
             exc_info=True,
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to simulate LLM response: {error_msg}",
+            detail=error_msg,
         ) from e
 
 
@@ -254,16 +258,16 @@ async def analyze_endpoint(request: AnalysisAnalyzeRequest) -> AnalysisAnalyzeRe
         )
 
     except ValueError as e:
-        error_msg = str(e)
+        error_msg = format_error_message(e, "analysis")
         logger.error(f"Invalid request for analysis: {error_msg}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid request: {error_msg}",
+            detail=error_msg,
         ) from e
     except Exception as e:
-        error_msg = str(e)
+        error_msg = format_error_message(e, "analysis")
         logger.error(f"Failed to analyze brand visibility for '{request.brand}': {error_msg}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to analyze brand visibility: {error_msg}",
+            detail=error_msg,
         ) from e
