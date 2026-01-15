@@ -1,1 +1,104 @@
-"""Audit endpoint - runs complete graph."""
+"""Main audit endpoint for GEO Pulse API."""
+
+import logging
+
+from fastapi import APIRouter, HTTPException, status
+
+from src.api.schemas.request import AuditRequest
+from src.api.schemas.response import AuditResponse, SearchResultResponse
+from src.core.graph.graph import create_audit_graph, create_initial_state
+from src.core.graph.state import LLMResponse
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter()
+
+
+@router.post("/audit", response_model=AuditResponse, tags=["audit"])
+async def audit_endpoint(request: AuditRequest) -> AuditResponse:
+    """
+    Main audit endpoint: Complete GEO audit workflow.
+
+    This endpoint orchestrates the full LangGraph workflow:
+    1. Generates realistic questions about the brand
+    2. Executes web searches for each question
+    3. Simulates LLM responses based on search results
+    4. Analyzes responses to calculate reputation score and generate recommendations
+
+    Args:
+        request: Audit request with brand, llm_provider, and include_details flag.
+
+    Returns:
+        AuditResponse: Reputation score, recommendations, and optionally detailed results.
+
+    Raises:
+        HTTPException: 400 if request is invalid, 500 if audit fails.
+    """
+    try:
+        logger.info(f"Starting GEO audit for brand: {request.brand} (LLM: {request.llm_provider})")
+
+        graph = create_audit_graph()
+
+        initial_state = create_initial_state(brand=request.brand, llm_provider=request.llm_provider)
+
+        final_state = graph.invoke(initial_state)
+
+        reputation_score = final_state.get("reputation_score", 0.0)
+        recommendations = final_state.get("recommendations", [])
+        questions = final_state.get("questions", [])
+        num_questions = len(questions)
+
+        response_data = {
+            "reputation_score": reputation_score,
+            "recommendations": recommendations,
+            "brand": request.brand,
+            "num_questions": num_questions,
+        }
+
+        if request.include_details:
+            search_results_dict = final_state.get("search_results", {})
+            search_results_response = {}
+            for question, results_dicts in search_results_dict.items():
+                search_results_response[question] = [
+                    SearchResultResponse.model_validate(result_dict) for result_dict in results_dicts
+                ]
+
+            llm_responses_dict = final_state.get("llm_responses", {})
+            llm_responses_response = {}
+            for question, response_dict in llm_responses_dict.items():
+                if not response_dict:
+                    continue
+                llm_responses_response[question] = LLMResponse.model_validate(response_dict)
+
+            response_data.update(
+                {
+                    "questions": questions,
+                    "search_results": search_results_response if search_results_response else None,
+                    "llm_responses": llm_responses_response if llm_responses_response else None,
+                    "errors": final_state.get("errors") or None,
+                    "search_errors": final_state.get("search_errors") or None,
+                    "llm_errors": final_state.get("llm_errors") or None,
+                }
+            )
+
+        logger.info(
+            f"Audit complete for {request.brand}. Score: {reputation_score}, "
+            f"Recommendations: {len(recommendations)}, Questions: {num_questions}"
+        )
+
+        return AuditResponse(**response_data)
+
+    except ValueError as e:
+        error_msg = str(e)
+        logger.error(f"Invalid request for audit: {error_msg}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid request: {error_msg}",
+        ) from e
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"Failed to complete audit for '{request.brand}': {error_msg}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to complete audit: {error_msg}",
+        ) from e

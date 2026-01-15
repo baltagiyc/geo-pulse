@@ -6,12 +6,11 @@ Uses structured output to extract response and sources automatically.
 """
 
 import logging
-import os
 
-from langchain_openai import ChatOpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from src.core.graph.state import LLMResponse, SearchResult
+from src.core.services.llm.llm_factory import create_llm
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +31,37 @@ def _format_search_results(search_results: list[SearchResult]) -> str:
     return "\n\n".join(formatted)
 
 
+def _extract_llm_name_from_spec(llm_spec: str) -> str:
+    """
+    Extract LLM name from factory specification.
+
+    Examples:
+        "openai:gpt-4" -> "gpt-4"
+        "openai:gpt-4o-mini" -> "gpt-4o-mini"
+        "gpt-4" -> "gpt-4" (already simple format)
+        "gemini" -> "gemini" (already simple format)
+
+    Args:
+        llm_spec: LLM specification (format "provider:model" or just "model")
+
+    Returns:
+        LLM name for metadata (e.g., "gpt-4", "gemini")
+    """
+    if ":" in llm_spec:
+        # Factory format: "openai:gpt-4" -> extract "gpt-4"
+        _, model = llm_spec.split(":", 1)
+        return model
+    else:
+        # Simple format: "gpt-4" -> return as is
+        return llm_spec
+
+
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def simulate_llm_response(
-    question: str, search_results: list[SearchResult], llm_provider: str = "gpt-4", brand: str = ""
+    question: str,
+    search_results: list[SearchResult],
+    llm_spec: str = "openai:gpt-4",
+    brand: str = "",
 ) -> LLMResponse:
     """
     Simulate an LLM response based on search results.
@@ -50,23 +77,33 @@ def simulate_llm_response(
     Args:
         question: The user's question
         search_results: List of SearchResult objects from web search
-        llm_provider: LLM provider name (e.g., "gpt-4", "gemini") - for now only "gpt-4" supported
+        llm_spec: LLM specification. Accepts two formats:
+                  - Factory format: "openai:gpt-4", "openai:gpt-4o-mini" (recommended)
+                  - Simple format: "gpt-4", "gemini" (will be converted via helper)
+                  Default: "openai:gpt-4"
         brand: Optional brand name for context in the prompt
 
     Returns:
         LLMResponse object with response text and cited sources
 
     Raises:
-        ValueError: If API key is missing
+        ValueError: If provider is not supported or API key is missing
         Exception: If LLM call fails after retries
     """
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY not found in environment variables")
-
     try:
-        # Initialize LLM with temperature 0.7 for realistic behavior
-        llm = ChatOpenAI(model="gpt-4", temperature=0.7, api_key=api_key)
+        # Convert simple format to factory format if needed (e.g., "gpt-4" -> "openai:gpt-4")
+        from src.core.services.llm.llm_factory import get_simulation_llm_for_provider
+
+        # If llm_spec is in factory format (contains ":"), use it directly
+        # Otherwise, convert using helper function
+        if ":" in llm_spec:
+            factory_llm_spec = llm_spec
+        else:
+            factory_llm_spec = get_simulation_llm_for_provider(llm_spec)
+
+        # Initialize LLM using factory (supports multiple providers)
+        # Temperature 0.7 for realistic behavior (matches real LLM interfaces)
+        llm = create_llm(llm_spec=factory_llm_spec, temperature=0.7)
 
         structured_llm = llm.with_structured_output(LLMResponse)
 
@@ -83,7 +120,8 @@ Cite the sources you use by including their URLs."""
 
         response = structured_llm.invoke(prompt)
 
-        response.llm_name = llm_provider
+        # Extract LLM name from spec for metadata (e.g., "openai:gpt-4" -> "gpt-4")
+        response.llm_name = _extract_llm_name_from_spec(llm_spec)
 
         logger.info(f"Generated LLM response for question: {question[:50]}...")
         logger.info(f"Response cites {len(response.sources)} sources")

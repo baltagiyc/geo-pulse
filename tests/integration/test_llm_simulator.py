@@ -77,10 +77,12 @@ def test_simulate_llm_response_real_api():
     print()
 
     try:
+        # Test with llm_spec parameter (simplified - accepts both "gpt-4" and "openai:gpt-4")
+        # This tests that the LLM factory is working correctly
         result = simulate_llm_response(
             question=question,
             search_results=search_results,
-            llm_provider="gpt-4",
+            llm_spec="openai:gpt-4",  # Factory format (can also use "gpt-4" for simple format)
             brand="Nike",
         )
 
