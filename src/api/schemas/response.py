@@ -18,6 +18,48 @@ class HealthResponse(BaseModel):
 
 
 # ============================================================================
+# MAIN AUDIT ENDPOINT - Response Schema
+# ============================================================================
+
+
+# Endpoint: POST /api/audit
+class AuditResponse(BaseModel):
+    """Response schema for the main audit endpoint."""
+
+    reputation_score: float = Field(description="Overall reputation score from 0.0 to 1.0", ge=0.0, le=1.0)
+    recommendations: list[Recommendation] = Field(
+        description="List of recommendations to improve brand visibility (GEO-focused)."
+    )
+    brand: str = Field(description="Brand name that was audited")
+    num_questions: int = Field(description="Number of questions that were generated and analyzed")
+
+    questions: list[str] | None = Field(
+        default=None,
+        description="List of questions generated about the brand (only if include_details=True).",
+    )
+    search_results: dict[str, list["SearchResultResponse"]] | None = Field(
+        default=None,
+        description=("Search results for each question, keyed by question text " "(only if include_details=True)."),
+    )
+    llm_responses: dict[str, LLMResponse] | None = Field(
+        default=None,
+        description=("LLM responses for each question, keyed by question text " "(only if include_details=True)."),
+    )
+    errors: list[str] | None = Field(
+        default=None,
+        description="General errors encountered during the audit (only if include_details=True).",
+    )
+    search_errors: list[str] | None = Field(
+        default=None,
+        description="Errors from search operations (only if include_details=True).",
+    )
+    llm_errors: list[str] | None = Field(
+        default=None,
+        description="Errors from LLM operations (only if include_details=True).",
+    )
+
+
+# ============================================================================
 # DEBUG ENDPOINTS - Response Schemas
 # ============================================================================
 
@@ -73,3 +115,11 @@ class AnalysisAnalyzeResponse(BaseModel):
     )
     brand: str = Field(description="Brand name that was analyzed")
     num_questions_analyzed: int = Field(description="Number of questions that were included in the analysis")
+
+
+def _resolve_forward_refs() -> None:
+    """Resolve forward references in response schemas."""
+    AuditResponse.model_rebuild()
+
+
+_resolve_forward_refs()
