@@ -4,6 +4,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException, status
 
+from src.api.exceptions import format_error_message
 from src.api.schemas.request import AuditRequest
 from src.api.schemas.response import AuditResponse, SearchResultResponse
 from src.core.graph.graph import create_audit_graph, create_initial_state
@@ -89,16 +90,16 @@ async def audit_endpoint(request: AuditRequest) -> AuditResponse:
         return AuditResponse(**response_data)
 
     except ValueError as e:
-        error_msg = str(e)
+        error_msg = format_error_message(e, "audit")
         logger.error(f"Invalid request for audit: {error_msg}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid request: {error_msg}",
+            detail=error_msg,
         ) from e
     except Exception as e:
-        error_msg = str(e)
+        error_msg = format_error_message(e, "audit")
         logger.error(f"Failed to complete audit for '{request.brand}': {error_msg}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to complete audit: {error_msg}",
+            detail=error_msg,
         ) from e
