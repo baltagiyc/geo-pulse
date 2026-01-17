@@ -73,6 +73,14 @@ class QuestionGenerateResponse(BaseModel):
     num_questions_generated: int = Field(description="Number of questions actually generated")
 
 
+# Endpoint: POST /api/brand/context
+class BrandContextResponse(BaseModel):
+    """Response schema for brand context endpoint (debug)."""
+
+    brand: str = Field(description="Brand name used for context generation")
+    brand_context: str = Field(description="Factual summary of what the brand does")
+
+
 # Endpoint: POST /api/search/execute
 class SearchResultResponse(BaseModel):
     """Response schema for a single search result."""

@@ -84,19 +84,55 @@ class QuestionGenerateRequest(BaseModel):
         ),
         examples=["openai:gpt-4o-mini", "openai:gpt-4"],
     )
+    brand_context: str | None = Field(
+        default=None,
+        description=(
+            "Optional factual context about the brand. This parameter is especially useful for "
+            "less-known brands or startups to prevent hallucinations. For well-known brands (e.g., Nike, Amazon), "
+            "you can omit this parameter as the LLM already has sufficient knowledge. "
+            "If provided, will be used to generate more accurate questions. "
+            "You can get brand context from `/api/brand/context` endpoint."
+        ),
+        examples=[None, "Brevo is a CRM and marketing automation platform."],
+    )
 
     model_config = {
         "json_schema_extra": {
             "examples": [
                 {
+                    "brand": "Brevo",
+                    "num_questions": 2,
+                    "question_llm": "openai:gpt-4o-mini",
+                    "brand_context": "Optional parameter: Brevo is a CRM and marketing automation platform.",
+                },
+                {
                     "brand": "Nike",
                     "num_questions": 2,
                     "question_llm": "openai:gpt-4o-mini",
                 },
+            ]
+        }
+    }
+
+
+# Endpoint: POST /api/brand/context
+class BrandContextRequest(BaseModel):
+    """Request schema for brand context endpoint (debug)."""
+
+    brand: str = Field(
+        min_length=1,
+        description="Name of the brand to summarize for context",
+        examples=["Brevo", "Nike", "SeDomicilier"],
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
                 {
-                    "brand": "Nike",
-                    "num_questions": 5,
-                    "question_llm": "openai:gpt-4",
+                    "brand": "Brevo",
+                },
+                {
+                    "brand": "SeDomicilier",
                 },
             ]
         }

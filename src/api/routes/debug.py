@@ -7,12 +7,14 @@ from fastapi import APIRouter, HTTPException, status
 from src.api.exceptions import format_error_message
 from src.api.schemas.request import (
     AnalysisAnalyzeRequest,
+    BrandContextRequest,
     LLMSimulateRequest,
     QuestionGenerateRequest,
     SearchExecuteRequest,
 )
 from src.api.schemas.response import (
     AnalysisAnalyzeResponse,
+    BrandContextResponse,
     LLMSimulateResponse,
     QuestionGenerateResponse,
     SearchExecuteResponse,
@@ -20,6 +22,7 @@ from src.api.schemas.response import (
 )
 from src.core.graph.state import SearchResult
 from src.core.services.analysis.analyst_service import analyze_brand_visibility
+from src.core.services.llm.brand_context_service import generate_brand_context
 from src.core.services.llm.llm_simulator import simulate_llm_response
 from src.core.services.llm.question_generator import generate_questions
 from src.core.services.search.search_factory import create_search_tool
@@ -37,8 +40,21 @@ async def generate_questions_endpoint(request: QuestionGenerateRequest) -> Quest
     This endpoint allows testing the question generation node in isolation.
     It uses the LLM factory to support multiple providers.
 
+    **Note on `brand_context` parameter:**
+    - This parameter is **optional** and especially useful for less-known brands or startups
+      to prevent hallucinations when generating questions.
+    - For well-known brands (e.g., Nike, Amazon, Google), you can **omit this parameter**
+      as the LLM already has sufficient knowledge about these brands.
+    - If you want to provide context, you can generate it using `/api/brand/context` endpoint
+      and copy the `brand_context` field here.
+
+    **Copy-paste workflow:**
+    - For unknown brands: Generate brand context using `/api/brand/context`, then copy the
+      `brand_context` field to use it here for more accurate questions.
+    - For well-known brands: Simply provide `brand`, `num_questions`, and `question_llm` (no need for `brand_context`).
+
     Args:
-        request: Question generation request with brand, num_questions, and question_llm
+        request: Question generation request with brand, num_questions, question_llm, and optional brand_context
 
     Returns:
         QuestionGenerateResponse: Generated questions with metadata
@@ -55,6 +71,7 @@ async def generate_questions_endpoint(request: QuestionGenerateRequest) -> Quest
             brand=request.brand,
             num_questions=request.num_questions,
             question_llm=request.question_llm,
+            brand_context=request.brand_context,
         )
 
         return QuestionGenerateResponse(
@@ -73,6 +90,49 @@ async def generate_questions_endpoint(request: QuestionGenerateRequest) -> Quest
     except Exception as e:
         error_msg = format_error_message(e, "question generation")
         logger.error(f"Failed to generate questions for brand '{request.brand}': {error_msg}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=error_msg,
+        ) from e
+
+
+@router.post("/brand/context", response_model=BrandContextResponse, tags=["debug"])
+async def generate_brand_context_endpoint(request: BrandContextRequest) -> BrandContextResponse:
+    """
+    Generate factual brand context (debug endpoint).
+
+    This endpoint allows testing the brand context node in isolation.
+    It uses Tavily search + LLM to build a factual summary of what the brand does.
+
+    Args:
+        request: Brand context request with brand name
+
+    Returns:
+        BrandContextResponse: Factual brand summary
+
+    Raises:
+        HTTPException: 400 if request is invalid, 500 if generation fails
+    """
+    try:
+        logger.info(f"Generating brand context for: {request.brand}")
+
+        brand_context = generate_brand_context(request.brand)
+
+        return BrandContextResponse(
+            brand=request.brand,
+            brand_context=brand_context,
+        )
+
+    except ValueError as e:
+        error_msg = format_error_message(e, "brand context generation")
+        logger.error(f"Invalid request for brand context generation: {error_msg}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_msg,
+        ) from e
+    except Exception as e:
+        error_msg = format_error_message(e, "brand context generation")
+        logger.error(f"Failed to generate brand context for '{request.brand}': {error_msg}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_msg,

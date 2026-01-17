@@ -8,6 +8,38 @@ from src.core.services.llm.question_generator import generate_questions
 logger = logging.getLogger(__name__)
 
 
+def brand_context_generator_node(state: GEOState) -> dict:
+    """
+    Node 0: Generate factual context about the brand.
+
+    This node searches the web and uses an LLM to create a factual summary
+    of what the brand does. This helps prevent hallucinations when generating
+    questions for unknown brands.
+    """
+    try:
+        brand = state["brand"]
+        logger.info(f"Generating brand context for: {brand}")
+
+        from src.core.services.llm.brand_context_service import generate_brand_context
+
+        context = generate_brand_context(brand)
+        state["brand_context"] = context or None
+
+        if state["brand_context"]:
+            logger.info(f"Generated brand context: {state['brand_context'][:100]}...")
+        else:
+            logger.info("No brand context generated (empty result)")
+
+    except Exception as e:
+        error_msg = f"Failed to generate brand context: {str(e)}"
+        logger.error(error_msg)
+        state["errors"].append(error_msg)
+        state["llm_errors"].append(error_msg)
+        state["brand_context"] = None
+
+    return state
+
+
 def question_generator_node(state: GEOState) -> dict:
     """
     Node 1: Generate relevant questions to audit the brand.
@@ -22,7 +54,8 @@ def question_generator_node(state: GEOState) -> dict:
         logger.info(f"Generating questions for brand: {brand}")
 
         # Generate questions using the service
-        questions = generate_questions(brand, num_questions=2)
+        brand_context = state.get("brand_context")
+        questions = generate_questions(brand, num_questions=2, brand_context=brand_context)
 
         state["questions"] = questions
         logger.info(f"Generated {len(questions)} questions")
