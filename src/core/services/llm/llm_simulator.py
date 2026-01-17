@@ -109,14 +109,24 @@ def simulate_llm_response(
 
         formatted_results = _format_search_results(search_results)
 
-        prompt = f"""{question}
+        # Build context-aware prompt
+        brand_context = f" (about {brand})" if brand else ""
 
-Here are some web search results related to this question:
+        prompt = f"""You are simulating how a real LLM (like ChatGPT) would respond to a user's question{brand_context}.
 
+User's question: {question}
+
+IMPORTANT: You have been provided with REAL, CURRENT web search results below. These results are up-to-date and contain the information needed to answer the question. You MUST use these search results to provide your answer. Do NOT say you don't have access to real-time data - you have it right here.
+
+Web search results:
 {formatted_results}
 
-Based on these search results and your knowledge, provide a comprehensive answer.
-Cite the sources you use by including their URLs."""
+Instructions:
+1. Use the search results above to answer the user's question comprehensively
+2. You can also use your general knowledge to provide context, but prioritize the search results
+3. Cite the specific URLs from the search results that you use in your answer
+4. Provide a detailed, helpful answer as a real LLM assistant would
+5. Do NOT mention that you don't have access to real-time data - you have been provided with current search results"""
 
         response = structured_llm.invoke(prompt)
 
