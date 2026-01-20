@@ -6,14 +6,13 @@ Uses LLM to analyze responses, identify weaknesses, competitors, and SEO opportu
 """
 
 import logging
-import os
 
-from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from src.core.graph.state import Recommendation
 from src.core.graph.utils import search_results_dicts_to_models
+from src.core.services.llm.llm_factory import create_llm
 
 logger = logging.getLogger(__name__)
 
@@ -127,16 +126,8 @@ def analyze_brand_visibility(
         ValueError: If API key is missing
         Exception: If LLM call fails after retries
     """
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY not found in environment variables")
-
     try:
-        llm = ChatOpenAI(
-            model="gpt-4",
-            temperature=0.3,  # Lower temperature for more consistent analysis
-            api_key=api_key,
-        )
+        llm = create_llm(llm_spec="openai:gpt-4", temperature=0.3)
 
         structured_llm = llm.with_structured_output(AnalysisResponse)
 
