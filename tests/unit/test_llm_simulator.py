@@ -13,14 +13,13 @@ from unittest.mock import MagicMock, patch
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+from src.core.config import SIMULATION_LLM_TEMPERATURE
 from src.core.graph.state import LLMResponse, SearchResult
-from src.core.services.llm.llm_simulator import (
-    _format_search_results,
-    simulate_llm_response,
-)
+from src.core.services.llm.llm_simulator import simulate_llm_response
+from src.core.services.utils import format_search_results_for_prompt
 
 
-def test_format_search_results():
+def test_format_search_results_for_prompt():
     """Test formatting of search results for prompt."""
     search_results = [
         SearchResult(
@@ -37,7 +36,7 @@ def test_format_search_results():
         ),
     ]
 
-    formatted = _format_search_results(search_results)
+    formatted = format_search_results_for_prompt(search_results)
 
     assert "Nike Official Site" in formatted
     assert "https://www.nike.com" in formatted
@@ -46,9 +45,9 @@ def test_format_search_results():
     assert "https://reviews.nike.com" in formatted
 
 
-def test_format_search_results_empty():
+def test_format_search_results_for_prompt_empty():
     """Test formatting with empty search results."""
-    formatted = _format_search_results([])
+    formatted = format_search_results_for_prompt([])
     assert formatted == "No search results available."
 
 
@@ -103,7 +102,7 @@ def test_simulate_llm_response_with_mock(mock_create_llm):
 
     # Verify LLM was called correctly
     # Note: llm_spec="openai:gpt-4" is passed directly, so factory is called with that
-    mock_create_llm.assert_called_once_with(llm_spec="openai:gpt-4", temperature=0.7)
+    mock_create_llm.assert_called_once_with(llm_spec="openai:gpt-4", temperature=SIMULATION_LLM_TEMPERATURE)
     mock_structured_llm.invoke.assert_called_once()
 
 
@@ -137,10 +136,10 @@ if __name__ == "__main__":
     print("🧪 Unit Tests: LLM Simulator Service (with mocks)")
     print("-" * 50)
 
-    test_format_search_results()
+    test_format_search_results_for_prompt()
     print("✅ Format search results test passed")
 
-    test_format_search_results_empty()
+    test_format_search_results_for_prompt_empty()
     print("✅ Empty search results formatting test passed")
 
     test_simulate_llm_response_with_mock()
