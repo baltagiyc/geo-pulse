@@ -11,24 +11,9 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 from src.core.graph.state import LLMResponse, SearchResult
 from src.core.services.llm.llm_factory import create_llm
+from src.core.services.utils import format_search_results_for_prompt
 
 logger = logging.getLogger(__name__)
-
-
-def _format_search_results(search_results: list[SearchResult]) -> str:
-    """
-    Format search results for the prompt. Because LLM cannot read Pydantic object.
-
-    Simple format: title, URL, and snippet for each result.
-    """
-    if not search_results:
-        return "No search results available."
-
-    formatted = []
-    for result in search_results:
-        formatted.append(f"Title: {result.title}\nURL: {result.url}\nSnippet: {result.snippet}")
-
-    return "\n\n".join(formatted)
 
 
 def _extract_llm_name_from_spec(llm_spec: str) -> str:
@@ -107,7 +92,7 @@ def simulate_llm_response(
 
         structured_llm = llm.with_structured_output(LLMResponse)
 
-        formatted_results = _format_search_results(search_results)
+        formatted_results = format_search_results_for_prompt(search_results)
 
         # Build context-aware prompt
         brand_context = f" (about {brand})" if brand else ""
