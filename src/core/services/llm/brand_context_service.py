@@ -10,7 +10,7 @@ import logging
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from src.core.services.llm.llm_factory import create_llm
-from src.core.services.search.tavily_service import search_with_tavily
+from src.core.services.search.search_factory import create_search_tool
 from src.core.services.utils import format_search_results_for_prompt
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,9 @@ def generate_brand_context(brand: str, context_llm: str = "openai:gpt-4o-mini") 
         Exception: If LLM call fails after retries
     """
     try:
-        search_results = search_with_tavily(f"{brand} company products services", max_results=5)
+        # use search factory so we can switch tools easily later (bing/google/perplexity)
+        search_function = create_search_tool("tavily")
+        search_results = search_function(f"{brand} company products services", max_results=5)
         if not search_results:
             logger.warning(f"No search results found for brand context: {brand}")
             return ""
