@@ -14,10 +14,11 @@ This is a generic utility that can be reused across different services:
 """
 
 import logging
-import os
 
 from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
+
+from src.core.config import get_openai_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -128,9 +129,7 @@ def _create_openai_llm(model: str, temperature: float) -> ChatOpenAI:
     Raises:
         ValueError: If OPENAI_API_KEY is missing
     """
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY not found in environment variables")
+    api_key = get_openai_api_key()
 
     logger.info(f"Creating OpenAI LLM: {model} (temperature={temperature})")
     return ChatOpenAI(model=model, temperature=temperature, api_key=api_key)
