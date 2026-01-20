@@ -15,28 +15,30 @@ To test the application, you can run `tests/integration/test_graph.py` and speci
 
 ## Architecture
 
-- **Backend**: LangGraph for workflow orchestration
-- **Services**: Modular services for question generation, web search, LLM simulation, and analysis
-- **Validation**: Pydantic for strict data validation
+- **Backend**: FastAPI REST API + LangGraph for workflow orchestration
+- **Frontend**: Streamlit web interface
+- **Workflow**: Linear LangGraph with 5 nodes (brand context → questions → search → LLM simulation → analysis)
+- **Services**: Modular services with factory pattern (LLM factory, search factory)
+- **Configuration**: Centralized config (magic numbers, API keys, defaults)
+- **Validation**: Pydantic for strict data validation (API schemas, internal models)
+- **State Management**: TypedDict for LangGraph state, Pydantic for services
 - **Testing**: Unit tests (with mocks) and integration tests (with real APIs)
+- **Observability**: LangSmith tracking for LLM calls, structured logging
 
 ## Current Project Status
 
 ### Implemented
 
-- **LangGraph Workflow**: 4 functional nodes (question generator, search executor, LLM simulator, response analyst)
-- **Business Services**: Question generator, Tavily search, LLM simulator, Analyst service
-- **Tests**: 17 passing unit and integration tests
+- **LangGraph Workflow**: 5 functional nodes (brand context generator, question generator, search executor, LLM simulator, response analyst)
+- **FastAPI Backend**: REST API with Swagger documentation, debug endpoints, and health checks
+- **Streamlit Frontend**: User interface to interact with the API
+- **Business Services**: Brand context generator, question generator, Tavily search, LLM simulator, Analyst service
+- **Architecture**: Factory pattern for LLM/search providers, centralized config, Pydantic↔dict conversions
+- **Tests**: 21 passing unit tests + integration tests
 - **Code Quality**: Pre-commit hooks (Ruff, Detect-secrets)
 - **CI/CD**: GitHub Actions with automatic unit tests
 - **Branch Protection**: Main branch protected with test verification before merge
-
-### To Do
-
-1. **FastAPI**: Expose the LangGraph workflow via a REST API
-2. **Streamlit**: Create a user interface to interact with the API
-3. **Docker**: Containerize the application for deployment
-4. **Deployment**: Deploy to production 
+- **Docker**: Single image deployment (backend + frontend) 
 
 ## Tech Stack
 
@@ -71,18 +73,34 @@ cp .env.example .env
 
 ## Usage
 
-### Run the graph directly
+### Run with Docker (Recommended)
 
-```python
-from src.core.graph.graph import create_audit_graph, create_initial_state
+```bash
+# Build the image
+docker build -t geo-pulse .
 
-graph = create_audit_graph()
-initial_state = create_initial_state(brand="Nike", llm_provider="gpt-4")
-result = graph.invoke(initial_state)
-
-print(f"Score: {result['reputation_score']}")
-print(f"Recommendations: {result['recommendations']}")
+# Run the container (backend + frontend) using your .env file
+docker run -p 8000:8000 -p 8501:8501 --env-file .env geo-pulse
 ```
+
+Then access:
+- **Frontend**: http://localhost:8501
+- **Backend API**: http://localhost:8000
+- **Swagger Docs**: http://localhost:8000/docs
+
+For more details and Docker options, see `docker.md`.
+
+### Run locally (Development)
+
+```bash
+# Start FastAPI backend
+uv run uvicorn src.api.main:app --reload
+
+# In another terminal, start Streamlit frontend
+uv run streamlit run src/frontend/app.py
+```
+
+
 
 ### Tests
 
@@ -90,24 +108,9 @@ print(f"Recommendations: {result['recommendations']}")
 # Unit tests (with mocks, fast)
 uv run pytest tests/unit/ -v
 
-```
 
-## Project Structure
 
-```
-geo-pulse/
-├── src/
-│   ├── core/
-│   │   ├── graph/          # LangGraph (state, nodes, graph)
-│   │   └── services/        # Business services (search, llm, analysis)
-│   └── api/                # FastAPI (coming soon)
-├── tests/
-│   ├── unit/               # Unit tests (mocks)
-│   └── integration/        # Integration tests (real APIs)
-├── .github/
-│   └── workflows/           # GitHub Actions CI/CD
-└── pyproject.toml          # Dependencies and configuration
-```
+
 
 ## Contributing
 
