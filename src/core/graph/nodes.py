@@ -1,6 +1,12 @@
 import logging
 
-from src.core.graph.state import GEOState, SearchResult
+from src.core.graph.state import GEOState
+from src.core.graph.utils import (
+    llm_response_model_to_dict,
+    recommendations_models_to_dicts,
+    search_results_dicts_to_models,
+    search_results_models_to_dicts,
+)
 from src.core.services.analysis.analyst_service import analyze_brand_visibility
 from src.core.services.llm.llm_simulator import simulate_llm_response
 from src.core.services.llm.question_generator import generate_questions
@@ -108,7 +114,7 @@ def search_executor_node(state: GEOState) -> dict:
             results = search_function(question, max_results=5)
 
             # Convert SearchResult objects to dicts for State storage
-            state["search_results"][question] = [result.model_dump() for result in results]
+            state["search_results"][question] = search_results_models_to_dicts(results)
 
             logger.info(f"Found {len(results)} results for question: {question}")
 
@@ -161,7 +167,7 @@ def llm_simulator_node(state: GEOState) -> dict:
                 continue
 
             # Convert dicts to SearchResult objects (revalidation)
-            search_results = [SearchResult.model_validate(result_dict) for result_dict in search_results_dicts]
+            search_results = search_results_dicts_to_models(search_results_dicts)
 
             # Simulate LLM response using the service
             # Convert llm_provider to factory format (e.g., "gpt-4" -> "openai:gpt-4")
@@ -177,7 +183,7 @@ def llm_simulator_node(state: GEOState) -> dict:
             )
 
             # Convert LLMResponse to dict for state storage
-            state["llm_responses"][question] = llm_response.model_dump()
+            state["llm_responses"][question] = llm_response_model_to_dict(llm_response)
 
             logger.info(f"Generated LLM response for question: {question[:50]}...")
             logger.info(f"Response cites {len(llm_response.sources)} sources")
@@ -231,7 +237,7 @@ def response_analyst_node(state: GEOState) -> dict:
 
         # Store results in state
         state["reputation_score"] = reputation_score
-        state["recommendations"] = [rec.model_dump() for rec in recommendations]
+        state["recommendations"] = recommendations_models_to_dicts(recommendations)
 
         logger.info(f"Analysis complete. Score: {reputation_score}, Recommendations: {len(recommendations)}")
 

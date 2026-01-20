@@ -12,7 +12,8 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from src.core.graph.state import Recommendation, SearchResult
+from src.core.graph.state import Recommendation
+from src.core.graph.utils import search_results_dicts_to_models
 
 logger = logging.getLogger(__name__)
 
@@ -48,14 +49,10 @@ def _format_llm_responses_for_analysis(
 
         # need to extract the pydantic model first
         available_domains = []
-        for result_dict in search_results_list:
-            try:
-                search_result = SearchResult.model_validate(result_dict)
-                available_domains.append(
-                    {"domain": search_result.domain, "url": search_result.url, "title": search_result.title}
-                )
-            except Exception:
-                continue
+        for search_result in search_results_dicts_to_models(search_results_list):
+            available_domains.append(
+                {"domain": search_result.domain, "url": search_result.url, "title": search_result.title}
+            )
 
         # Separate cited vs non-cited domains
         cited_domains = [d for d in available_domains if d["url"] in sources_cited]
@@ -96,13 +93,9 @@ def _extract_domains_from_sources(search_results: dict[str, list[dict]]) -> dict
     """
     domain_counts = {}
     for question, results in search_results.items():
-        for result_dict in results:
-            try:
-                search_result = SearchResult.model_validate(result_dict)
-                if search_result.domain:
-                    domain_counts[search_result.domain] = domain_counts.get(search_result.domain, 0) + 1
-            except Exception:
-                continue
+        for search_result in search_results_dicts_to_models(results):
+            if search_result.domain:
+                domain_counts[search_result.domain] = domain_counts.get(search_result.domain, 0) + 1
 
     return domain_counts
 
