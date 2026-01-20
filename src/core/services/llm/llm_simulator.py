@@ -9,26 +9,12 @@ import logging
 
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+from src.core.config import DEFAULT_SIMULATION_LLM, SIMULATION_LLM_TEMPERATURE
 from src.core.graph.state import LLMResponse, SearchResult
-from src.core.services.llm.llm_factory import create_llm
+from src.core.services.llm.llm_factory import create_llm, get_simulation_llm_for_provider
+from src.core.services.utils import format_search_results_for_prompt
 
 logger = logging.getLogger(__name__)
-
-
-def _format_search_results(search_results: list[SearchResult]) -> str:
-    """
-    Format search results for the prompt. Because LLM cannot read Pydantic object.
-
-    Simple format: title, URL, and snippet for each result.
-    """
-    if not search_results:
-        return "No search results available."
-
-    formatted = []
-    for result in search_results:
-        formatted.append(f"Title: {result.title}\nURL: {result.url}\nSnippet: {result.snippet}")
-
-    return "\n\n".join(formatted)
 
 
 def _extract_llm_name_from_spec(llm_spec: str) -> str:
@@ -60,7 +46,7 @@ def _extract_llm_name_from_spec(llm_spec: str) -> str:
 def simulate_llm_response(
     question: str,
     search_results: list[SearchResult],
-    llm_spec: str = "openai:gpt-4",
+    llm_spec: str = DEFAULT_SIMULATION_LLM,
     brand: str = "",
 ) -> LLMResponse:
     """
@@ -91,9 +77,6 @@ def simulate_llm_response(
         Exception: If LLM call fails after retries
     """
     try:
-        # Convert simple format to factory format if needed (e.g., "gpt-4" -> "openai:gpt-4")
-        from src.core.services.llm.llm_factory import get_simulation_llm_for_provider
-
         # If llm_spec is in factory format (contains ":"), use it directly
         # Otherwise, convert using helper function
         if ":" in llm_spec:
@@ -101,15 +84,12 @@ def simulate_llm_response(
         else:
             factory_llm_spec = get_simulation_llm_for_provider(llm_spec)
 
-        # Initialize LLM using factory (supports multiple providers)
-        # Temperature 0.7 for realistic behavior (matches real LLM interfaces)
-        llm = create_llm(llm_spec=factory_llm_spec, temperature=0.7)
+        llm = create_llm(llm_spec=factory_llm_spec, temperature=SIMULATION_LLM_TEMPERATURE)
 
         structured_llm = llm.with_structured_output(LLMResponse)
 
-        formatted_results = _format_search_results(search_results)
+        formatted_results = format_search_results_for_prompt(search_results)
 
-        # Build context-aware prompt
         brand_context = f" (about {brand})" if brand else ""
 
         prompt = f"""You are simulating how a real LLM (like ChatGPT) would respond to a user's question{brand_context}.

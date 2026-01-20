@@ -6,13 +6,14 @@ Uses LLM to analyze responses, identify weaknesses, competitors, and SEO opportu
 """
 
 import logging
-import os
 
-from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from src.core.graph.state import Recommendation, SearchResult
+from src.core.config import ANALYSIS_LLM_TEMPERATURE, DEFAULT_ANALYSIS_LLM
+from src.core.graph.state import Recommendation
+from src.core.graph.utils import search_results_dicts_to_models
+from src.core.services.llm.llm_factory import create_llm
 
 logger = logging.getLogger(__name__)
 
@@ -48,14 +49,10 @@ def _format_llm_responses_for_analysis(
 
         # need to extract the pydantic model first
         available_domains = []
-        for result_dict in search_results_list:
-            try:
-                search_result = SearchResult.model_validate(result_dict)
-                available_domains.append(
-                    {"domain": search_result.domain, "url": search_result.url, "title": search_result.title}
-                )
-            except Exception:
-                continue
+        for search_result in search_results_dicts_to_models(search_results_list):
+            available_domains.append(
+                {"domain": search_result.domain, "url": search_result.url, "title": search_result.title}
+            )
 
         # Separate cited vs non-cited domains
         cited_domains = [d for d in available_domains if d["url"] in sources_cited]
@@ -96,13 +93,9 @@ def _extract_domains_from_sources(search_results: dict[str, list[dict]]) -> dict
     """
     domain_counts = {}
     for question, results in search_results.items():
-        for result_dict in results:
-            try:
-                search_result = SearchResult.model_validate(result_dict)
-                if search_result.domain:
-                    domain_counts[search_result.domain] = domain_counts.get(search_result.domain, 0) + 1
-            except Exception:
-                continue
+        for search_result in search_results_dicts_to_models(results):
+            if search_result.domain:
+                domain_counts[search_result.domain] = domain_counts.get(search_result.domain, 0) + 1
 
     return domain_counts
 
@@ -134,16 +127,8 @@ def analyze_brand_visibility(
         ValueError: If API key is missing
         Exception: If LLM call fails after retries
     """
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY not found in environment variables")
-
     try:
-        llm = ChatOpenAI(
-            model="gpt-4",
-            temperature=0.3,  # Lower temperature for more consistent analysis
-            api_key=api_key,
-        )
+        llm = create_llm(llm_spec=DEFAULT_ANALYSIS_LLM, temperature=ANALYSIS_LLM_TEMPERATURE)
 
         structured_llm = llm.with_structured_output(AnalysisResponse)
 

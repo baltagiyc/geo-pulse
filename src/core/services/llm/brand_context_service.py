@@ -9,31 +9,16 @@ import logging
 
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from src.core.graph.state import SearchResult
+from src.core.config import CONTEXT_LLM_TEMPERATURE, DEFAULT_CONTEXT_LLM, DEFAULT_MAX_SEARCH_RESULTS
 from src.core.services.llm.llm_factory import create_llm
-from src.core.services.search.tavily_service import search_with_tavily
+from src.core.services.search.search_factory import create_search_tool
+from src.core.services.utils import format_search_results_for_prompt
 
 logger = logging.getLogger(__name__)
 
 
-def _format_search_results_for_context(search_results: list[SearchResult]) -> str:
-    """
-    Format search results for the context prompt.
-
-    Simple format: title, URL, and snippet for each result.
-    """
-    if not search_results:
-        return "No search results available."
-
-    formatted = []
-    for result in search_results:
-        formatted.append(f"Title: {result.title}\nURL: {result.url}\nSnippet: {result.snippet}")
-
-    return "\n\n".join(formatted)
-
-
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
-def generate_brand_context(brand: str, context_llm: str = "openai:gpt-4o-mini") -> str:
+def generate_brand_context(brand: str, context_llm: str = DEFAULT_CONTEXT_LLM) -> str:
     """
     Generate a factual summary of a brand using web search and LLM.
 
@@ -49,14 +34,19 @@ def generate_brand_context(brand: str, context_llm: str = "openai:gpt-4o-mini") 
         Exception: If LLM call fails after retries
     """
     try:
-        search_results = search_with_tavily(f"{brand} company products services", max_results=5)
+        # use search factory so we can switch tools easily later (bing/google/perplexity)
+        search_function = create_search_tool("tavily")
+        search_results = search_function(
+            f"{brand} company products services",
+            max_results=DEFAULT_MAX_SEARCH_RESULTS,
+        )
         if not search_results:
             logger.warning(f"No search results found for brand context: {brand}")
             return ""
 
-        formatted_results = _format_search_results_for_context(search_results)
+        formatted_results = format_search_results_for_prompt(search_results)
 
-        llm = create_llm(context_llm, temperature=0.3)
+        llm = create_llm(context_llm, temperature=CONTEXT_LLM_TEMPERATURE)
 
         prompt = f"""You are a fact-checker. Your goal is to provide a factual, neutral summary of what this brand/company does.
 

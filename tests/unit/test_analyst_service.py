@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, patch
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+from src.core.config import ANALYSIS_LLM_TEMPERATURE, DEFAULT_ANALYSIS_LLM
 from src.core.graph.state import Recommendation
 from src.core.services.analysis.analyst_service import (
     AnalysisResponse,
@@ -118,8 +119,8 @@ def test_format_llm_responses_for_analysis():
     assert "amazon.com" in formatted  # Should be in non-cited
 
 
-@patch("src.core.services.analysis.analyst_service.ChatOpenAI")
-def test_analyze_brand_visibility_with_mock(mock_chat_openai):
+@patch("src.core.services.analysis.analyst_service.create_llm")
+def test_analyze_brand_visibility_with_mock(mock_create_llm):
     """
     Test brand visibility analysis with mocked LLM (for CI/CD).
 
@@ -147,9 +148,9 @@ def test_analyze_brand_visibility_with_mock(mock_chat_openai):
     )
     mock_structured_llm.invoke.return_value = mock_response
 
-    # Mock the chain: ChatOpenAI() -> with_structured_output() -> invoke()
+    # Mock the chain: create_llm() -> with_structured_output() -> invoke()
     mock_llm_instance.with_structured_output.return_value = mock_structured_llm
-    mock_chat_openai.return_value = mock_llm_instance
+    mock_create_llm.return_value = mock_llm_instance
 
     # Prepare test data
     questions = ["What are the best Nike products?", "What are Nike's weaknesses?"]
@@ -204,16 +205,12 @@ def test_analyze_brand_visibility_with_mock(mock_chat_openai):
     assert recommendations[0].priority == "high"
 
     # Verify LLM was called correctly
-    mock_chat_openai.assert_called_once()
+    mock_create_llm.assert_called_once_with(llm_spec=DEFAULT_ANALYSIS_LLM, temperature=ANALYSIS_LLM_TEMPERATURE)
     mock_structured_llm.invoke.assert_called_once()
 
-    # Verify temperature is set to 0.3 for analysis
-    call_args = mock_chat_openai.call_args
-    assert call_args.kwargs["temperature"] == 0.3
 
-
-@patch("src.core.services.analysis.analyst_service.ChatOpenAI")
-def test_analyze_brand_visibility_empty_data(mock_chat_openai):
+@patch("src.core.services.analysis.analyst_service.create_llm")
+def test_analyze_brand_visibility_empty_data(mock_create_llm):
     """Test that empty data is handled correctly."""
     mock_llm_instance = MagicMock()
     mock_structured_llm = MagicMock()
@@ -221,7 +218,7 @@ def test_analyze_brand_visibility_empty_data(mock_chat_openai):
     mock_response = AnalysisResponse(reputation_score=0.0, recommendations=[])
     mock_structured_llm.invoke.return_value = mock_response
     mock_llm_instance.with_structured_output.return_value = mock_structured_llm
-    mock_chat_openai.return_value = mock_llm_instance
+    mock_create_llm.return_value = mock_llm_instance
 
     with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
         score, recommendations = analyze_brand_visibility(
