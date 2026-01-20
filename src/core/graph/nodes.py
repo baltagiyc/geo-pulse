@@ -1,5 +1,6 @@
 import logging
 
+from src.core.config import DEFAULT_MAX_SEARCH_RESULTS, DEFAULT_NUM_QUESTIONS
 from src.core.graph.state import GEOState
 from src.core.graph.utils import (
     llm_response_model_to_dict,
@@ -61,7 +62,7 @@ def question_generator_node(state: GEOState) -> dict:
         logger.info(f"Generating questions for brand: {brand}")
 
         brand_context = state.get("brand_context")
-        questions = generate_questions(brand, num_questions=2, brand_context=brand_context)
+        questions = generate_questions(brand, num_questions=DEFAULT_NUM_QUESTIONS, brand_context=brand_context)
 
         state["questions"] = questions
         logger.info(f"Generated {len(questions)} questions")
@@ -102,7 +103,7 @@ def search_executor_node(state: GEOState) -> dict:
         try:
             logger.info(f"Searching for question: {question} using {search_tool_spec}")
 
-            results = search_function(question, max_results=5)
+            results = search_function(question, max_results=DEFAULT_MAX_SEARCH_RESULTS)
 
             state["search_results"][question] = search_results_models_to_dicts(results)
 

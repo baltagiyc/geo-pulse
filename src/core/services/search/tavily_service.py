@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from langchain_tavily import TavilySearch
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+from src.core.config import DEFAULT_MAX_SEARCH_RESULTS
 from src.core.graph.state import SearchResult
 
 load_dotenv()
@@ -61,7 +62,7 @@ def _transform_tavily_result(tavily_result: dict) -> SearchResult:
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
-def search_with_tavily(query: str, max_results: int = 5) -> list[SearchResult]:
+def search_with_tavily(query: str, max_results: int = DEFAULT_MAX_SEARCH_RESULTS) -> list[SearchResult]:
     """
     Search the web using Tavily API.
 

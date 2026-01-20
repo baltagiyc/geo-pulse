@@ -9,6 +9,7 @@ import logging
 
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+from src.core.config import DEFAULT_SIMULATION_LLM, SIMULATION_LLM_TEMPERATURE
 from src.core.graph.state import LLMResponse, SearchResult
 from src.core.services.llm.llm_factory import create_llm, get_simulation_llm_for_provider
 from src.core.services.utils import format_search_results_for_prompt
@@ -45,7 +46,7 @@ def _extract_llm_name_from_spec(llm_spec: str) -> str:
 def simulate_llm_response(
     question: str,
     search_results: list[SearchResult],
-    llm_spec: str = "openai:gpt-4",
+    llm_spec: str = DEFAULT_SIMULATION_LLM,
     brand: str = "",
 ) -> LLMResponse:
     """
@@ -83,7 +84,7 @@ def simulate_llm_response(
         else:
             factory_llm_spec = get_simulation_llm_for_provider(llm_spec)
 
-        llm = create_llm(llm_spec=factory_llm_spec, temperature=0.7)
+        llm = create_llm(llm_spec=factory_llm_spec, temperature=SIMULATION_LLM_TEMPERATURE)
 
         structured_llm = llm.with_structured_output(LLMResponse)
 

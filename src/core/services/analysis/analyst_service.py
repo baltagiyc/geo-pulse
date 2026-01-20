@@ -10,6 +10,7 @@ import logging
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+from src.core.config import ANALYSIS_LLM_TEMPERATURE, DEFAULT_ANALYSIS_LLM
 from src.core.graph.state import Recommendation
 from src.core.graph.utils import search_results_dicts_to_models
 from src.core.services.llm.llm_factory import create_llm
@@ -127,7 +128,7 @@ def analyze_brand_visibility(
         Exception: If LLM call fails after retries
     """
     try:
-        llm = create_llm(llm_spec="openai:gpt-4", temperature=0.3)
+        llm = create_llm(llm_spec=DEFAULT_ANALYSIS_LLM, temperature=ANALYSIS_LLM_TEMPERATURE)
 
         structured_llm = llm.with_structured_output(AnalysisResponse)
 

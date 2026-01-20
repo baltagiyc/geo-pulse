@@ -10,6 +10,7 @@ import logging
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+from src.core.config import DEFAULT_NUM_QUESTIONS, DEFAULT_QUESTION_LLM, QUESTION_LLM_TEMPERATURE
 from src.core.services.llm.llm_factory import create_llm
 
 logger = logging.getLogger(__name__)
@@ -32,8 +33,8 @@ class QuestionsResponse(BaseModel):
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def generate_questions(
     brand: str,
-    num_questions: int = 2,
-    question_llm: str = "openai:gpt-4o-mini",
+    num_questions: int = DEFAULT_NUM_QUESTIONS,
+    question_llm: str = DEFAULT_QUESTION_LLM,
     brand_context: str | None = None,
 ) -> list[str]:
     """
@@ -56,7 +57,7 @@ def generate_questions(
         Exception: If LLM call fails after retries
     """
     try:
-        llm = create_llm(question_llm, temperature=0.7)
+        llm = create_llm(question_llm, temperature=QUESTION_LLM_TEMPERATURE)
 
         structured_llm = llm.with_structured_output(QuestionsResponse)
 
