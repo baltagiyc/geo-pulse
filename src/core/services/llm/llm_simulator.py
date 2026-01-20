@@ -10,7 +10,7 @@ import logging
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from src.core.graph.state import LLMResponse, SearchResult
-from src.core.services.llm.llm_factory import create_llm
+from src.core.services.llm.llm_factory import create_llm, get_simulation_llm_for_provider
 from src.core.services.utils import format_search_results_for_prompt
 
 logger = logging.getLogger(__name__)
@@ -76,9 +76,6 @@ def simulate_llm_response(
         Exception: If LLM call fails after retries
     """
     try:
-        # Convert simple format to factory format if needed (e.g., "gpt-4" -> "openai:gpt-4")
-        from src.core.services.llm.llm_factory import get_simulation_llm_for_provider
-
         # If llm_spec is in factory format (contains ":"), use it directly
         # Otherwise, convert using helper function
         if ":" in llm_spec:
@@ -86,15 +83,12 @@ def simulate_llm_response(
         else:
             factory_llm_spec = get_simulation_llm_for_provider(llm_spec)
 
-        # Initialize LLM using factory (supports multiple providers)
-        # Temperature 0.7 for realistic behavior (matches real LLM interfaces)
         llm = create_llm(llm_spec=factory_llm_spec, temperature=0.7)
 
         structured_llm = llm.with_structured_output(LLMResponse)
 
         formatted_results = format_search_results_for_prompt(search_results)
 
-        # Build context-aware prompt
         brand_context = f" (about {brand})" if brand else ""
 
         prompt = f"""You are simulating how a real LLM (like ChatGPT) would respond to a user's question{brand_context}.

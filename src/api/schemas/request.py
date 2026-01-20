@@ -1,13 +1,9 @@
 """Pydantic models for API requests."""
 
-from typing import TYPE_CHECKING
-
 from pydantic import BaseModel, Field
 
+from src.api.schemas.response import SearchResultResponse
 from src.core.graph.state import LLMResponse
-
-if TYPE_CHECKING:
-    from src.api.schemas.response import SearchResultResponse
 
 # ============================================================================
 # MAIN AUDIT ENDPOINT - Request Schema
@@ -322,8 +318,6 @@ class AnalysisAnalyzeRequest(BaseModel):
 # Resolve forward references after all models are defined
 def _resolve_forward_refs() -> None:
     """Resolve forward references in request schemas."""
-    from src.api.schemas.response import SearchResultResponse  # noqa: F401
-
     LLMSimulateRequest.model_rebuild()
     AnalysisAnalyzeRequest.model_rebuild()
 

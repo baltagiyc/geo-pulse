@@ -16,6 +16,7 @@ import logging
 from collections.abc import Callable
 
 from src.core.graph.state import SearchResult
+from src.core.services.search.tavily_service import search_with_tavily
 
 logger = logging.getLogger(__name__)
 
@@ -151,8 +152,6 @@ def _create_tavily_search() -> SearchFunction:
     Raises:
         ValueError: If TAVILY_API_KEY is missing
     """
-    from src.core.services.search.tavily_service import search_with_tavily
-
     logger.info("Creating Tavily search tool")
     return search_with_tavily
 
