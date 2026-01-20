@@ -4,14 +4,13 @@
 
 GEO Pulse is a brand audit application for **GEO (Generative Engine Optimization)**. It evaluates a brand's visibility in LLM responses (ChatGPT, Gemini, Perplexity, etc.) and generates strategic recommendations to improve this visibility.
 
-To test the application, you can run `tests/integration/test_graph.py` and specify the brand name and LLM provider.
-
 ### How It Works
 
-1. **Question Generation**: The system generates realistic questions that a user might ask about the brand
-2. **Web Search**: Uses Tavily API to retrieve relevant search results
-3. **LLM Simulation**: Simulates responses that LLMs (ChatGPT, Gemini, etc.) would give based on search results
-4. **Analysis and Recommendations**: Analyzes responses to calculate a visibility score (0.0 to 1.0) and generate targeted GEO/SEO recommendations
+1. **Brand Context Generation**: Generates factual context about the brand (especially useful for less-known brands to prevent hallucinations)
+2. **Question Generation**: The system generates realistic questions that a user might ask about the brand
+3. **Web Search**: Uses Tavily API to retrieve relevant search results
+4. **LLM Simulation**: Simulates responses that LLMs (ChatGPT, Gemini, etc.) would give based on search results
+5. **Analysis and Recommendations**: Analyzes responses to calculate a visibility score (0.0 to 1.0) and generate targeted GEO/SEO recommendations
 
 ## Architecture
 
@@ -24,21 +23,6 @@ To test the application, you can run `tests/integration/test_graph.py` and speci
 - **State Management**: TypedDict for LangGraph state, Pydantic for services
 - **Testing**: Unit tests (with mocks) and integration tests (with real APIs)
 - **Observability**: LangSmith tracking for LLM calls, structured logging
-
-## Current Project Status
-
-### Implemented
-
-- **LangGraph Workflow**: 5 functional nodes (brand context generator, question generator, search executor, LLM simulator, response analyst)
-- **FastAPI Backend**: REST API with Swagger documentation, debug endpoints, and health checks
-- **Streamlit Frontend**: User interface to interact with the API
-- **Business Services**: Brand context generator, question generator, Tavily search, LLM simulator, Analyst service
-- **Architecture**: Factory pattern for LLM/search providers, centralized config, Pydantic↔dict conversions
-- **Tests**: 21 passing unit tests + integration tests
-- **Code Quality**: Pre-commit hooks (Ruff, Detect-secrets)
-- **CI/CD**: GitHub Actions with automatic unit tests
-- **Branch Protection**: Main branch protected with test verification before merge
-- **Docker**: Single image deployment (backend + frontend) 
 
 ## Tech Stack
 
@@ -80,7 +64,7 @@ cp .env.example .env
 docker build -t geo-pulse .
 
 # Run the container (backend + frontend) using your .env file
-docker run -p 8000:8000 -p 8501:8501 --env-file .env geo-pulse
+docker run -p 8000:8000 -p 8501:8501 --name geo-pulse-container --env-file .env geo-pulse
 ```
 
 Then access:
@@ -100,16 +84,11 @@ uv run uvicorn src.api.main:app --reload
 uv run streamlit run src/frontend/app.py
 ```
 
-
-
 ### Tests
 
 ```bash
 # Unit tests (with mocks, fast)
 uv run pytest tests/unit/ -v
-
-
-
 
 
 ## Contributing
