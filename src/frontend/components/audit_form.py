@@ -16,12 +16,13 @@ def render_audit_form() -> tuple[str, str, bool]:
     llm_provider = st.selectbox(
         "LLM provider",
         options=[
+            "gpt-5.2",  # Latest (2025)
+            "gpt-5",
+            "gpt-4.1",  # API-optimized
             "gpt-4",
-            "gpt-4o",
-            "gpt-4o-mini",
         ],
-        index=0,
-        help="Select the LLM provider to simulate. Some providers may fall back to OpenAI for now.",
+        index=0,  # Default to gpt-5.2 (latest)
+        help="Select the LLM provider to simulate. Latest models (GPT-5.2, GPT-5) require API access.",
     )
 
     include_details = st.checkbox(

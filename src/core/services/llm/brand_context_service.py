@@ -24,7 +24,7 @@ def generate_brand_context(brand: str, context_llm: str = DEFAULT_CONTEXT_LLM) -
 
     Args:
         brand: Name of the brand to summarize
-        context_llm: LLM specification in format "provider:model" (default: "openai:gpt-4o-mini")
+        context_llm: LLM specification in format "provider:model" (default: "openai:gpt-4.1-mini")
 
     Returns:
         Factual summary string (2-3 sentences)

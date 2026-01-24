@@ -25,55 +25,59 @@ logger = logging.getLogger(__name__)
 # Mapping of LLM provider names to their factory format
 # This ensures we convert user-friendly names (e.g., "gpt-4", "gemini") to factory format (e.g., "openai:gpt-4")
 LLM_PROVIDER_TO_FACTORY_MAPPING = {
-    # OpenAI models
-    "chatgpt": "openai:gpt-4",
-    "gpt-4": "openai:gpt-4",
-    "gpt-4o": "openai:gpt-4o",
-    "gpt-4o-mini": "openai:gpt-4o-mini",
-    "gpt-3.5-turbo": "openai:gpt-3.5-turbo",
+    # OpenAI models (latest first)
+    "gpt-5.2": "openai:gpt-5.2",  # Latest model (2025)
+    "gpt-5": "openai:gpt-5",  # Advanced model with reasoning capabilities
+    "gpt-4.1": "openai:gpt-4.1",  # API-optimized model (better than GPT-4o)
+    "gpt-4.1-mini": "openai:gpt-4.1-mini",  # Lightweight API-optimized model
+    "gpt-4o": "openai:gpt-4o",  # Flagship model with multimodal support
+    "gpt-4o-mini": "openai:gpt-4o-mini",  # Lightweight version
+    "chatgpt": "openai:gpt-5.2",  # Default ChatGPT experience (uses latest model)
+    "gpt-4": "openai:gpt-4",  # Previous high-intelligence model
+    "gpt-3.5-turbo": "openai:gpt-3.5-turbo",  # Fast model for routine tasks
     # Google models (to be implemented)
-    "gemini": "openai:gpt-4",  # TODO: Change to "google:gemini" when implemented
-    "gemini-pro": "openai:gpt-4",  # TODO: Change to "google:gemini-pro" when implemented
+    "gemini": "",  # TODO: Change to "google:gemini" when implemented
+    "gemini-pro": "",  # TODO: Change to "google:gemini-pro" when implemented
     # Anthropic models (to be implemented)
-    "claude": "openai:gpt-4",  # TODO: Change to "anthropic:claude" when implemented
-    "claude-3": "openai:gpt-4",  # TODO: Change to "anthropic:claude-3" when implemented
-    # Default fallback
-    "default": "openai:gpt-4",
+    "claude": "",  # TODO: Change to "anthropic:claude" when implemented
+    "default": "openai:gpt-5",
 }
 
 
 def get_simulation_llm_for_provider(llm_provider: str) -> str:
     """
-    Convert LLM provider name to factory format.
+    Convert LLM provider name to factory format for simulation.
 
-    This function maps user-friendly provider names (e.g., "gpt-4", "gemini")
-    to factory format (e.g., "openai:gpt-4", "google:gemini").
+    This function maps user-friendly provider names (e.g., "gpt-5.2", "gpt-4o", "gemini")
+    to factory format (e.g., "openai:gpt-5.2", "openai:gpt-4o", "google:gemini").
 
-    For now, returns "openai:gpt-4" for all providers as default.
-    Future: will return the correct factory format based on the mapping above.
+    Used when simulating what a specific LLM (ChatGPT, Gemini, etc.) would respond.
+    Returns the actual model to use for simulation.
 
     Args:
-        llm_provider: LLM provider name (e.g., "gpt-4", "gemini", "claude")
+        llm_provider: LLM provider name (e.g., "gpt-5.2", "gpt-4o", "gemini", "claude")
 
     Returns:
-        Factory format LLM specification (e.g., "openai:gpt-4", "google:gemini")
+        Factory format LLM specification (e.g., "openai:gpt-5.2", "openai:gpt-4o", "google:gemini")
     """
     provider_lower = llm_provider.lower().strip()
 
     simulation_llm = LLM_PROVIDER_TO_FACTORY_MAPPING.get(provider_lower)
 
+    # If mapping not found, use default
     if simulation_llm is None:
-        logger.info(f"No factory mapping for '{llm_provider}'. Using default: 'openai:gpt-4'")
+        logger.info(f"No factory mapping for '{llm_provider}'. Using default: 'openai:gpt-5'")
         return LLM_PROVIDER_TO_FACTORY_MAPPING["default"]
 
-    # TODO: Once other providers (Google, Anthropic) are implemented, return the mapped value
-    # For now, always return OpenAI as default
-    if simulation_llm != LLM_PROVIDER_TO_FACTORY_MAPPING["default"]:
+    # If mapping is empty string, provider not yet implemented (e.g., gemini, claude)
+    if simulation_llm == "":
         logger.info(
-            f"LLM provider '{llm_provider}' should use '{simulation_llm}', "
-            f"but using 'openai:gpt-4' as default (not yet implemented)"
+            f"LLM provider '{llm_provider}' not yet implemented. Using default: 'openai:gpt-5'"
         )
-    return LLM_PROVIDER_TO_FACTORY_MAPPING["default"]
+        return LLM_PROVIDER_TO_FACTORY_MAPPING["default"]
+
+    # Return the actual mapping (e.g., "gpt-5.2" -> "openai:gpt-5.2")
+    return simulation_llm
 
 
 def create_llm(llm_spec: str = "openai:gpt-4o-mini", temperature: float = 0.7) -> BaseChatModel:
@@ -81,11 +85,7 @@ def create_llm(llm_spec: str = "openai:gpt-4o-mini", temperature: float = 0.7) -
     Create an LLM instance based on provider and model specification.
 
     Format: "provider:model"
-    Examples:
-        - "openai:gpt-4o-mini"
-        - "openai:gpt-4"
-        - "mistral:mistral-small" (to be implemented)
-        - "ollama:llama2" (to be implemented)
+
 
     Args:
         llm_spec: LLM specification in format "provider:model" (default: "openai:gpt-4o-mini")
@@ -120,7 +120,7 @@ def _create_openai_llm(model: str, temperature: float) -> ChatOpenAI:
     Create an OpenAI LLM instance.
 
     Args:
-        model: OpenAI model name (e.g., "gpt-4o-mini", "gpt-4", "gpt-3.5-turbo")
+        model: OpenAI model name (e.g., "gpt-5.2", "gpt-5")
         temperature: Temperature for the LLM
 
     Returns:

@@ -39,6 +39,12 @@ GEO Pulse is a brand audit application for **GEO (Generative Engine Optimization
 
 ## Installation
 
+### Option 1: Docker (Recommended - No local dependencies needed)
+
+See [Usage > Run with Docker](#run-with-docker-recommended---no-pythonuv-needed) section below. Just Docker + your API keys!
+
+### Option 2: Local Development (requires Python 3.12+ and uv)
+
 ```bash
 # Install uv if not already installed
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -59,11 +65,17 @@ cp .env.example .env
 
 ### Run with Docker (Recommended)
 
+**The easiest way to run GEO Pulse:** Just Docker + your API keys. Docker handles everything (Python, dependencies, tools).
+
 ```bash
-# Build the image
+# 1. Prepare your API keys
+cp .env.example .env
+# Edit .env and add your API keys
+
+# 2. Build the image (includes everything: Python, uv, dependencies)
 docker build -t geo-pulse .
 
-# Run the container (backend + frontend) using your .env file
+# 3. Run the container (backend + frontend)
 docker run -p 8000:8000 -p 8501:8501 --name geo-pulse-container --env-file .env geo-pulse
 ```
 

@@ -14,11 +14,12 @@ Think of it like compiling a program:
 
 ### 1. Prerequisites
 
-- Docker installed
+- **Docker installed** (that's it! No need for any other dependencies)
 - Your **own** API keys:
   - `OPENAI_API_KEY`
   - `TAVILY_API_KEY`
-  - (optional) `LANGCHAIN_API_KEY` for LangSmith
+
+**Note:** Docker handles everything for you - Python, dependencies (`uv`), and all tools are included in the image. You just need Docker and your API keys!
 
 ### 2. Prepare the `.env` file
 

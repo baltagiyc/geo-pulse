@@ -17,6 +17,7 @@ sys.path.insert(0, str(project_root))
 
 import os
 
+from src.core.config import QUESTION_LLM_TEMPERATURE, DEFAULT_QUESTION_LLM
 from src.core.services.llm.question_generator import (
     QuestionsResponse,
     generate_questions,
@@ -84,7 +85,7 @@ def test_generate_questions_with_mock(mock_create_llm):
     assert "Nike" in questions[0]
 
     # Verify LLM was called correctly
-    mock_create_llm.assert_called_once_with("openai:gpt-4o-mini", temperature=0.7)
+    mock_create_llm.assert_called_once_with(DEFAULT_QUESTION_LLM, temperature=QUESTION_LLM_TEMPERATURE)
     mock_structured_llm.invoke.assert_called_once()
 
 

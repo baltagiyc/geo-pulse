@@ -66,7 +66,7 @@ def simulate_llm_response(
         llm_spec: LLM specification. Accepts two formats:
                   - Factory format: "openai:gpt-4", "openai:gpt-4o-mini" (recommended)
                   - Simple format: "gpt-4", "gemini" (will be converted via helper)
-                  Default: "openai:gpt-4"
+                  Default: "openai:gpt-5.2" (latest model)
         brand: Optional brand name for context in the prompt
 
     Returns:
