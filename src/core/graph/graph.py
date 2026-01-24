@@ -13,7 +13,7 @@ from src.core.graph.state import GEOState
 load_dotenv()
 
 
-def create_initial_state(brand: str, llm_provider: str = "gpt-4") -> GEOState:
+def create_initial_state(brand: str, llm_provider: str = "gpt-5.2") -> GEOState:
     """
     Create an initial state for the GEO audit graph.
 

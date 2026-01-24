@@ -95,7 +95,7 @@ def search_executor_node(state: GEOState) -> dict:
     if "search_errors" not in state:
         state["search_errors"] = []
 
-    llm_provider = state.get("llm_provider", "gpt-4")
+    llm_provider = state.get("llm_provider", "gpt-5.2")
     search_tool_spec = get_search_tool_for_llm(llm_provider)
     search_function = create_search_tool(search_tool_spec)
 
@@ -137,7 +137,7 @@ def llm_simulator_node(state: GEOState) -> dict:
     if "llm_errors" not in state:
         state["llm_errors"] = []
 
-    llm_provider = state.get("llm_provider", "gpt-4")
+    llm_provider = state.get("llm_provider", "gpt-5.2")
     brand = state.get("brand", "")
 
     for question in state.get("questions", []):

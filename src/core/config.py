@@ -15,10 +15,10 @@ SIMULATION_LLM_TEMPERATURE = 0.7
 CONTEXT_LLM_TEMPERATURE = 0.3
 ANALYSIS_LLM_TEMPERATURE = 0.3
 
-DEFAULT_QUESTION_LLM = "openai:gpt-4o-mini"
-DEFAULT_CONTEXT_LLM = "openai:gpt-4o-mini"
-DEFAULT_SIMULATION_LLM = "openai:gpt-4"
-DEFAULT_ANALYSIS_LLM = "openai:gpt-4"
+DEFAULT_QUESTION_LLM = "openai:gpt-4.1-mini"  
+DEFAULT_CONTEXT_LLM = "openai:gpt-4.1-mini"  
+DEFAULT_SIMULATION_LLM = "openai:gpt-5.2"
+DEFAULT_ANALYSIS_LLM = "openai:gpt-4.1"  
 
 
 def get_openai_api_key() -> str:

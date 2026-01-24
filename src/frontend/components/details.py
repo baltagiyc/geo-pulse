@@ -10,6 +10,7 @@ def render_details(result: dict) -> None:
     questions = result.get("questions") or []
     search_results = result.get("search_results") or {}
     llm_responses = result.get("llm_responses") or {}
+    brand_context = result.get("brand_context") or ""
     errors = result.get("errors") or []
     search_errors = result.get("search_errors") or []
     llm_errors = result.get("llm_errors") or []
@@ -20,6 +21,12 @@ def render_details(result: dict) -> None:
         else:
             for q in questions:
                 st.write(f"- {q}")
+
+    with st.expander("Brand Context", expanded=False):
+        if not brand_context:
+            st.info("No brand context available.")
+        else:
+            st.write(brand_context)
 
     with st.expander("Search Results", expanded=False):
         if not search_results:

@@ -76,6 +76,7 @@ async def audit_endpoint(request: AuditRequest) -> AuditResponse:
                     "questions": questions,
                     "search_results": search_results_response if search_results_response else None,
                     "llm_responses": llm_responses_response if llm_responses_response else None,
+                    "brand_context": final_state.get("brand_context") or None,
                     "errors": final_state.get("errors") or None,
                     "search_errors": final_state.get("search_errors") or None,
                     "llm_errors": final_state.get("llm_errors") or None,

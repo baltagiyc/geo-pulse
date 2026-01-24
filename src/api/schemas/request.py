@@ -19,13 +19,12 @@ class AuditRequest(BaseModel):
         examples=["Nike", "Brevo", "Amazon"],
     )
     llm_provider: str = Field(
-        default="gpt-4",
+        default="gpt-5.2",
         description=(
-            "LLM provider to simulate/audit. Options: 'gpt-4', 'gpt-4o', 'gpt-4o-mini', "
-            "'gemini', 'claude', 'perplexity' (default: 'gpt-4'). "
-            "The search tool is automatically determined from the LLM provider."
+            "LLM provider to simulate/audit. Options: 'gpt-5.2', 'gpt-5'"
+            "(default: 'gpt-5.2' - latest model used by ChatGPT). The search tool is automatically determined from the LLM provider."
         ),
-        examples=["gpt-4", "gpt-4o", "gemini"],
+        examples=["gpt-5.2"],
     )
     include_details: bool = Field(
         default=False,
@@ -42,12 +41,12 @@ class AuditRequest(BaseModel):
             "examples": [
                 {
                     "brand": "Nike",
-                    "llm_provider": "gpt-4",
+                    "llm_provider": "gpt-5.2",
                     "include_details": False,
                 },
                 {
                     "brand": "Brevo",
-                    "llm_provider": "gpt-4o",
+                    "llm_provider": "gpt-5.2",
                     "include_details": True,
                 },
             ]
@@ -75,10 +74,10 @@ class QuestionGenerateRequest(BaseModel):
         default="openai:gpt-4o-mini",
         description=(
             'LLM to use for generating questions. Format: "provider:model" '
-            '(e.g., "openai:gpt-4o-mini", "openai:gpt-4"). This is the LLM used internally to '
-            "generate questions, separate from the LLM being audited."
+            '(e.g., "openai:gpt-4.1-mini", "openai:gpt-5.2", "openai:gpt-4o"). '
+            "This is the LLM used internally to generate questions, separate from the LLM being audited."
         ),
-        examples=["openai:gpt-4o-mini", "openai:gpt-4"],
+        examples=["openai:gpt-4.1-mini", "openai:gpt-4o"],
     )
     brand_context: str | None = Field(
         default=None,
@@ -98,13 +97,13 @@ class QuestionGenerateRequest(BaseModel):
                 {
                     "brand": "Brevo",
                     "num_questions": 2,
-                    "question_llm": "openai:gpt-4o-mini",
+                    "question_llm": "openai:gpt-4.1-mini",
                     "brand_context": "Optional parameter: Brevo is a CRM and marketing automation platform.",
                 },
                 {
                     "brand": "Nike",
                     "num_questions": 2,
-                    "question_llm": "openai:gpt-4o-mini",
+                    "question_llm": "openai:gpt-4.1-mini",
                 },
             ]
         }
@@ -202,13 +201,13 @@ class LLMSimulateRequest(BaseModel):
         ),
     )
     llm_spec: str = Field(
-        default="openai:gpt-4",
+        default="openai:gpt-5.2",
         description=(
             'LLM specification for simulation. Format: "provider:model" '
-            '(e.g., "openai:gpt-4", "openai:gpt-4o-mini") or simple format "gpt-4". '
-            "This is the LLM being audited (simulated)."
+            '(e.g., "openai:gpt-5.2" (latest), "openai:gpt-5", "openai:gpt-4o") or simple format "gpt-5.2". '
+            "This is the LLM being audited (simulated). Defaults to latest model (GPT-5.2)."
         ),
-        examples=["openai:gpt-4", "gpt-4", "openai:gpt-4o-mini"],
+        examples=["openai:gpt-5.2", "openai:gpt-5", "openai:gpt-4o"],
     )
     brand: str = Field(
         default="",
@@ -241,7 +240,7 @@ class LLMSimulateRequest(BaseModel):
                             "domain": "gearpatrol.com",
                         },
                     ],
-                    "llm_spec": "openai:gpt-4",
+                    "llm_spec": "openai:gpt-5.2",
                     "brand": "Nike",
                 }
             ]
