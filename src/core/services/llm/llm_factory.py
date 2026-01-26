@@ -16,9 +16,10 @@ This is a generic utility that can be reused across different services:
 import logging
 
 from langchain_core.language_models import BaseChatModel
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 
-from src.core.config import get_openai_api_key
+from src.core.config import get_google_api_key, get_openai_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +36,19 @@ LLM_PROVIDER_TO_FACTORY_MAPPING = {
     "chatgpt": "openai:gpt-5.2",  # Default ChatGPT experience (uses latest model)
     "gpt-4": "openai:gpt-4",  # Previous high-intelligence model
     "gpt-3.5-turbo": "openai:gpt-3.5-turbo",  # Fast model for routine tasks
-    # Google models (to be implemented)
-    "gemini": "",  # TODO: Change to "google:gemini" when implemented
-    "gemini-pro": "",  # TODO: Change to "google:gemini-pro" when implemented
+    "gemini": "google:gemini-3-pro-preview",  # Default Gemini (Pro mode - most intelligent, Dec 2025)
+    "gemini-pro": "google:gemini-3-pro-preview",  # Pro mode - most intelligent model
+    "gemini-3-pro": "google:gemini-3-pro-preview",  # Pro mode - most intelligent model
+    # 2. Latest & Fastest (December 2025)
+    "gemini-flash": "google:gemini-3-flash-preview",  # Flash mode - fast and balanced (Dec 2025)
+    "gemini-3-flash": "google:gemini-3-flash-preview",  # Flash mode - fast and balanced
+    # 3. Stable & Reliable (June 2025)
+    "gemini-reasoning": "google:gemini-2.5-pro",  # Reasoning mode - stable release (June 2025)
+    "gemini-2.5-pro": "google:gemini-2.5-pro",  # Stable Pro model (June 2025)
+    "gemini-2.5-flash": "google:gemini-2.5-flash",  # Stable Flash model (June 2025) - fast and reliable
     # Anthropic models (to be implemented)
     "claude": "",  # TODO: Change to "anthropic:claude" when implemented
-    "default": "openai:gpt-5",
+    "default": "openai:gpt-5.2",
 }
 
 
@@ -64,19 +72,17 @@ def get_simulation_llm_for_provider(llm_provider: str) -> str:
 
     simulation_llm = LLM_PROVIDER_TO_FACTORY_MAPPING.get(provider_lower)
 
-    # If mapping not found, use default
+    default_llm = LLM_PROVIDER_TO_FACTORY_MAPPING["default"]
     if simulation_llm is None:
-        logger.info(f"No factory mapping for '{llm_provider}'. Using default: 'openai:gpt-5'")
-        return LLM_PROVIDER_TO_FACTORY_MAPPING["default"]
+        logger.info(f"No factory mapping for '{llm_provider}'. Using default: '{default_llm}'")
+        return default_llm
 
-    # If mapping is empty string, provider not yet implemented (e.g., gemini, claude)
     if simulation_llm == "":
         logger.info(
-            f"LLM provider '{llm_provider}' not yet implemented. Using default: 'openai:gpt-5'"
+            f"LLM provider '{llm_provider}' not yet implemented. Using default: '{default_llm}'"
         )
-        return LLM_PROVIDER_TO_FACTORY_MAPPING["default"]
+        return default_llm
 
-    # Return the actual mapping (e.g., "gpt-5.2" -> "openai:gpt-5.2")
     return simulation_llm
 
 
@@ -105,14 +111,16 @@ def create_llm(llm_spec: str = "openai:gpt-4o-mini", temperature: float = 0.7) -
 
     if provider == "openai":
         return _create_openai_llm(model, temperature)
+    elif provider == "google":
+        return _create_google_llm(model, temperature)
     elif provider == "mistral":
         # TODO: Implement Mistral support
-        raise ValueError("Mistral provider not yet implemented. Supported providers: openai")
+        raise ValueError("Mistral provider not yet implemented. Supported providers: openai, google")
     elif provider == "ollama":
         # TODO: Implement Ollama support
-        raise ValueError("Ollama provider not yet implemented. Supported providers: openai")
+        raise ValueError("Ollama provider not yet implemented. Supported providers: openai, google")
     else:
-        raise ValueError(f"Unsupported provider: {provider}. Supported providers: openai")
+        raise ValueError(f"Unsupported provider: {provider}. Supported providers: openai, google")
 
 
 def _create_openai_llm(model: str, temperature: float) -> ChatOpenAI:
@@ -133,6 +141,26 @@ def _create_openai_llm(model: str, temperature: float) -> ChatOpenAI:
 
     logger.info(f"Creating OpenAI LLM: {model} (temperature={temperature})")
     return ChatOpenAI(model=model, temperature=temperature, api_key=api_key)
+
+
+def _create_google_llm(model: str, temperature: float) -> ChatGoogleGenerativeAI:
+    """
+    Create a Google Gemini LLM instance.
+
+    Args:
+        model: Google Gemini model name (e.g., "gemini-3-pro-preview", "gemini-3-flash-preview", "gemini-2.5-pro")
+        temperature: Temperature for the LLM
+
+    Returns:
+        ChatGoogleGenerativeAI instance
+
+    Raises:
+        ValueError: If GOOGLE_API_KEY is missing
+    """
+    api_key = get_google_api_key()
+
+    logger.info(f"Creating Google Gemini LLM: {model} (temperature={temperature})")
+    return ChatGoogleGenerativeAI(model=model, temperature=temperature, google_api_key=api_key)
 
 
 # TODO: Add functions for other providers

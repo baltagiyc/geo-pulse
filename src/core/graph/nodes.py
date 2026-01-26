@@ -203,11 +203,15 @@ def response_analyst_node(state: GEOState) -> dict:
             state["recommendations"] = []
             return state
 
+        llm_provider = state.get("llm_provider", "gpt-5.2")
+        analysis_llm = get_simulation_llm_for_provider(llm_provider)
+
         reputation_score, recommendations = analyze_brand_visibility(
             brand=brand,
             questions=questions,
             llm_responses=llm_responses,
             search_results=search_results,
+            analysis_llm=analysis_llm,
         )
 
         state["reputation_score"] = reputation_score
