@@ -20,9 +20,13 @@ def render_audit_form() -> tuple[str, str, bool]:
             "gpt-5",
             "gpt-4.1",  # API-optimized
             "gpt-4",
+            "gemini",  # Gemini Pro (default)
+            "gemini-pro",  # Gemini Pro (explicit)
+            "gemini-flash",  # Gemini Flash (fast)
+            "gemini-reasoning",  # Gemini Reasoning (advanced thinking)
         ],
         index=0,  # Default to gpt-5.2 (latest)
-        help="Select the LLM provider to simulate. Latest models (GPT-5.2, GPT-5) require API access.",
+        help="Select the LLM provider to simulate. Supports ChatGPT (GPT-5.2, GPT-5) and Gemini (Pro, Flash, Reasoning) models.",
     )
 
     include_details = st.checkbox(

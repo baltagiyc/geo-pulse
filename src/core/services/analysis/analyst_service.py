@@ -102,7 +102,11 @@ def _extract_domains_from_sources(search_results: dict[str, list[dict]]) -> dict
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def analyze_brand_visibility(
-    brand: str, questions: list[str], llm_responses: dict[str, dict], search_results: dict[str, list[dict]]
+    brand: str,
+    questions: list[str],
+    llm_responses: dict[str, dict],
+    search_results: dict[str, list[dict]],
+    analysis_llm: str | None = None,
 ) -> tuple[float, list[Recommendation]]:
     """
     Analyze brand visibility based on LLM responses.
@@ -119,6 +123,8 @@ def analyze_brand_visibility(
         questions: List of questions asked
         llm_responses: Dict mapping question to LLMResponse dict
         search_results: Dict mapping question to list of SearchResult dicts
+        analysis_llm: Optional LLM specification in factory format (e.g., "openai:gpt-5.2", "google:gemini-3-pro").
+                      If not provided, uses DEFAULT_ANALYSIS_LLM. If provided, uses the same LLM as simulation.
 
     Returns:
         Tuple of (reputation_score: float, recommendations: List[Recommendation])
@@ -128,7 +134,8 @@ def analyze_brand_visibility(
         Exception: If LLM call fails after retries
     """
     try:
-        llm = create_llm(llm_spec=DEFAULT_ANALYSIS_LLM, temperature=ANALYSIS_LLM_TEMPERATURE)
+        llm_spec = analysis_llm if analysis_llm else DEFAULT_ANALYSIS_LLM
+        llm = create_llm(llm_spec=llm_spec, temperature=ANALYSIS_LLM_TEMPERATURE)
 
         structured_llm = llm.with_structured_output(AnalysisResponse)
 

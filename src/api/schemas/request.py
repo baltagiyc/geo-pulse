@@ -21,7 +21,7 @@ class AuditRequest(BaseModel):
     llm_provider: str = Field(
         default="gpt-5.2",
         description=(
-            "LLM provider to simulate/audit. Options: 'gpt-5.2', 'gpt-5'"
+            "LLM provider to simulate/audit. Options: 'gpt-5.2', 'gpt-5', 'gemini', 'gemini-pro', 'gemini-flash', 'gemini-reasoning'"
             "(default: 'gpt-5.2' - latest model used by ChatGPT). The search tool is automatically determined from the LLM provider."
         ),
         examples=["gpt-5.2"],
@@ -74,10 +74,10 @@ class QuestionGenerateRequest(BaseModel):
         default="openai:gpt-4o-mini",
         description=(
             'LLM to use for generating questions. Format: "provider:model" '
-            '(e.g., "openai:gpt-4.1-mini", "openai:gpt-5.2", "openai:gpt-4o"). '
+            '(e.g., "openai:gpt-4.1-mini", "openai:gpt-5.2", "google:gemini-3-pro-preview", "google:gemini-3-flash-preview"). '
             "This is the LLM used internally to generate questions, separate from the LLM being audited."
         ),
-        examples=["openai:gpt-4.1-mini", "openai:gpt-4o"],
+        examples=["openai:gpt-4.1-mini", "openai:gpt-4o", "google:gemini-3-pro-preview"],
     )
     brand_context: str | None = Field(
         default=None,
@@ -204,10 +204,10 @@ class LLMSimulateRequest(BaseModel):
         default="openai:gpt-5.2",
         description=(
             'LLM specification for simulation. Format: "provider:model" '
-            '(e.g., "openai:gpt-5.2" (latest), "openai:gpt-5", "openai:gpt-4o") or simple format "gpt-5.2". '
+            '(e.g., "openai:gpt-5.2" (latest), "openai:gpt-5", "google:gemini-3-pro-preview", "google:gemini-3-flash-preview") or simple format "gpt-5.2", "gemini". '
             "This is the LLM being audited (simulated). Defaults to latest model (GPT-5.2)."
         ),
-        examples=["openai:gpt-5.2", "openai:gpt-5", "openai:gpt-4o"],
+        examples=["openai:gpt-5.2", "openai:gpt-5", "openai:gpt-4o", "google:gemini-3-pro-preview", "google:gemini-3-flash-preview"],
     )
     brand: str = Field(
         default="",
