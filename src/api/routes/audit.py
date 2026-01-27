@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, status
 from src.api.exceptions import format_error_message
 from src.api.schemas.request import AuditRequest
 from src.api.schemas.response import AuditResponse, SearchResultResponse
+from src.core.config import get_access_codes, is_hf_space
 from src.core.graph.graph import create_audit_graph, create_initial_state
 from src.core.graph.state import LLMResponse
 
@@ -40,7 +41,29 @@ async def audit_endpoint(request: AuditRequest) -> AuditResponse:
 
         graph = create_audit_graph()
 
-        initial_state = create_initial_state(brand=request.brand, llm_provider=request.llm_provider)
+        provider_lower = request.llm_provider.lower().strip()
+        is_gemini = provider_lower.startswith("gemini")
+        access_codes = get_access_codes()
+        has_valid_access_code = bool(request.access_code and request.access_code in access_codes)
+
+        if is_hf_space() and not has_valid_access_code:
+            if is_gemini and not request.google_api_key:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Missing GOOGLE_API_KEY. Provide a valid access code or your own Google API key.",
+                )
+            if not is_gemini and not request.openai_api_key:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Missing OPENAI_API_KEY. Provide a valid access code or your own OpenAI API key.",
+                )
+
+        initial_state = create_initial_state(
+            brand=request.brand,
+            llm_provider=request.llm_provider,
+            openai_api_key=request.openai_api_key,
+            google_api_key=request.google_api_key,
+        )
 
         final_state = graph.invoke(initial_state)
 

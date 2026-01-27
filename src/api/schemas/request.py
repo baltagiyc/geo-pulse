@@ -26,6 +26,30 @@ class AuditRequest(BaseModel):
         ),
         examples=["gpt-5.2"],
     )
+    access_code: str | None = Field(
+        default=None,
+        description=(
+            "Optional access code for demo usage. If valid, the audit can run using server-provided API keys. "
+            "If not provided or invalid, users must supply their own API keys below."
+        ),
+        examples=[None, "GEO-01"],
+    )
+    openai_api_key: str | None = Field(
+        default=None,
+        description=(
+            "Optional OpenAI API key (user-provided). Required if no valid access code is provided and "
+            "the selected LLM provider is an OpenAI model."
+        ),
+        examples=[None],
+    )
+    google_api_key: str | None = Field(
+        default=None,
+        description=(
+            "Optional Google API key (user-provided). Required if no valid access code is provided and "
+            "the selected LLM provider is a Gemini model."
+        ),
+        examples=[None],
+    )
     include_details: bool = Field(
         default=False,
         description=(
@@ -207,7 +231,13 @@ class LLMSimulateRequest(BaseModel):
             '(e.g., "openai:gpt-5.2" (latest), "openai:gpt-5", "google:gemini-3-pro-preview", "google:gemini-3-flash-preview") or simple format "gpt-5.2", "gemini". '
             "This is the LLM being audited (simulated). Defaults to latest model (GPT-5.2)."
         ),
-        examples=["openai:gpt-5.2", "openai:gpt-5", "openai:gpt-4o", "google:gemini-3-pro-preview", "google:gemini-3-flash-preview"],
+        examples=[
+            "openai:gpt-5.2",
+            "openai:gpt-5",
+            "openai:gpt-4o",
+            "google:gemini-3-pro-preview",
+            "google:gemini-3-flash-preview",
+        ],
     )
     brand: str = Field(
         default="",

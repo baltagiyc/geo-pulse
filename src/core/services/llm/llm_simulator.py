@@ -48,6 +48,7 @@ def simulate_llm_response(
     search_results: list[SearchResult],
     llm_spec: str = DEFAULT_SIMULATION_LLM,
     brand: str = "",
+    llm_api_key: str | None = None,
 ) -> LLMResponse:
     """
     Simulate an LLM response based on search results.
@@ -84,7 +85,12 @@ def simulate_llm_response(
         else:
             factory_llm_spec = get_simulation_llm_for_provider(llm_spec)
 
-        llm = create_llm(llm_spec=factory_llm_spec, temperature=SIMULATION_LLM_TEMPERATURE)
+        llm_kwargs = {"api_key": llm_api_key} if llm_api_key else {}
+        llm = create_llm(
+            llm_spec=factory_llm_spec,
+            temperature=SIMULATION_LLM_TEMPERATURE,
+            **llm_kwargs,
+        )
 
         structured_llm = llm.with_structured_output(LLMResponse)
 

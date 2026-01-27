@@ -28,9 +28,10 @@ def brand_context_generator_node(state: GEOState) -> dict:
     """
     try:
         brand = state["brand"]
+        openai_api_key = state.get("openai_api_key")
         logger.info(f"Generating brand context for: {brand}")
 
-        context = generate_brand_context(brand)
+        context = generate_brand_context(brand, openai_api_key=openai_api_key)
         state["brand_context"] = context or None
 
         if state["brand_context"]:
@@ -59,10 +60,16 @@ def question_generator_node(state: GEOState) -> dict:
     """
     try:
         brand = state["brand"]
+        openai_api_key = state.get("openai_api_key")
         logger.info(f"Generating questions for brand: {brand}")
 
         brand_context = state.get("brand_context")
-        questions = generate_questions(brand, num_questions=DEFAULT_NUM_QUESTIONS, brand_context=brand_context)
+        questions = generate_questions(
+            brand,
+            num_questions=DEFAULT_NUM_QUESTIONS,
+            brand_context=brand_context,
+            openai_api_key=openai_api_key,
+        )
 
         state["questions"] = questions
         logger.info(f"Generated {len(questions)} questions")
@@ -139,6 +146,8 @@ def llm_simulator_node(state: GEOState) -> dict:
 
     llm_provider = state.get("llm_provider", "gpt-5.2")
     brand = state.get("brand", "")
+    openai_api_key = state.get("openai_api_key")
+    google_api_key = state.get("google_api_key")
 
     for question in state.get("questions", []):
         try:
@@ -154,11 +163,14 @@ def llm_simulator_node(state: GEOState) -> dict:
             search_results = search_results_dicts_to_models(search_results_dicts)
 
             llm_spec = get_simulation_llm_for_provider(llm_provider)
+            use_google_key = llm_spec.startswith("google:")
+            llm_api_key = google_api_key if use_google_key else openai_api_key
             llm_response = simulate_llm_response(
                 question=question,
                 search_results=search_results,
                 llm_spec=llm_spec,
                 brand=brand,
+                llm_api_key=llm_api_key,
             )
 
             state["llm_responses"][question] = llm_response_model_to_dict(llm_response)
@@ -205,6 +217,10 @@ def response_analyst_node(state: GEOState) -> dict:
 
         llm_provider = state.get("llm_provider", "gpt-5.2")
         analysis_llm = get_simulation_llm_for_provider(llm_provider)
+        openai_api_key = state.get("openai_api_key")
+        google_api_key = state.get("google_api_key")
+        use_google_key = analysis_llm.startswith("google:")
+        analysis_api_key = google_api_key if use_google_key else openai_api_key
 
         reputation_score, recommendations = analyze_brand_visibility(
             brand=brand,
@@ -212,6 +228,7 @@ def response_analyst_node(state: GEOState) -> dict:
             llm_responses=llm_responses,
             search_results=search_results,
             analysis_llm=analysis_llm,
+            analysis_api_key=analysis_api_key,
         )
 
         state["reputation_score"] = reputation_score

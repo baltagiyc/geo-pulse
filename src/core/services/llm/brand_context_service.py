@@ -18,7 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
-def generate_brand_context(brand: str, context_llm: str = DEFAULT_CONTEXT_LLM) -> str:
+def generate_brand_context(
+    brand: str, context_llm: str = DEFAULT_CONTEXT_LLM, openai_api_key: str | None = None
+) -> str:
     """
     Generate a factual summary of a brand using web search and LLM.
 
@@ -46,7 +48,8 @@ def generate_brand_context(brand: str, context_llm: str = DEFAULT_CONTEXT_LLM) -
 
         formatted_results = format_search_results_for_prompt(search_results)
 
-        llm = create_llm(context_llm, temperature=CONTEXT_LLM_TEMPERATURE)
+        llm_kwargs = {"api_key": openai_api_key} if openai_api_key else {}
+        llm = create_llm(context_llm, temperature=CONTEXT_LLM_TEMPERATURE, **llm_kwargs)
 
         prompt = f"""You are a fact-checker. Your goal is to provide a factual, neutral summary of what this brand/company does.
 

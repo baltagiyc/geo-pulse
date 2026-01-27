@@ -13,7 +13,12 @@ from src.core.graph.state import GEOState
 load_dotenv()
 
 
-def create_initial_state(brand: str, llm_provider: str = "gpt-5.2") -> GEOState:
+def create_initial_state(
+    brand: str,
+    llm_provider: str = "gpt-5.2",
+    openai_api_key: str | None = None,
+    google_api_key: str | None = None,
+) -> GEOState:
     """
     Create an initial state for the GEO audit graph.
 
@@ -36,6 +41,8 @@ def create_initial_state(brand: str, llm_provider: str = "gpt-5.2") -> GEOState:
         "messages": [],
         "brand": brand,
         "llm_provider": llm_provider,
+        "openai_api_key": openai_api_key,
+        "google_api_key": google_api_key,
         "brand_context": None,
         "questions": [],
         "search_results": {},

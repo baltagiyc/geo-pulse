@@ -15,10 +15,10 @@ SIMULATION_LLM_TEMPERATURE = 0.7
 CONTEXT_LLM_TEMPERATURE = 0.3
 ANALYSIS_LLM_TEMPERATURE = 0.3
 
-DEFAULT_QUESTION_LLM = "openai:gpt-4.1-mini"  
-DEFAULT_CONTEXT_LLM = "openai:gpt-4.1-mini"  
+DEFAULT_QUESTION_LLM = "openai:gpt-4.1-mini"
+DEFAULT_CONTEXT_LLM = "openai:gpt-4.1-mini"
 DEFAULT_SIMULATION_LLM = "openai:gpt-5.2"
-DEFAULT_ANALYSIS_LLM = "openai:gpt-5.2"  
+DEFAULT_ANALYSIS_LLM = "openai:gpt-5.2"
 
 
 def get_openai_api_key() -> str:
@@ -58,3 +58,18 @@ def get_google_api_key() -> str:
     if not api_key:
         raise ValueError("GOOGLE_API_KEY not found in environment variables")
     return api_key
+
+
+def get_access_codes() -> set[str]:
+    """
+    Retrieve access codes from environment variables.
+
+    Expected format: ACCESS_CODES="CODE1,CODE2,CODE3"
+    """
+    raw_codes = os.getenv("ACCESS_CODES", "")
+    return {code.strip() for code in raw_codes.split(",") if code.strip()}
+
+
+def is_hf_space() -> bool:
+    """Return True when running in Hugging Face Spaces."""
+    return bool(os.getenv("SPACE_ID"))
