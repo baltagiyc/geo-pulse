@@ -1,6 +1,12 @@
 import logging
 
-from src.core.config import DEFAULT_MAX_SEARCH_RESULTS, DEFAULT_NUM_QUESTIONS
+from src.core.config import (
+    DEFAULT_CONTEXT_LLM,
+    DEFAULT_INTERNAL_GEMINI_LLM,
+    DEFAULT_MAX_SEARCH_RESULTS,
+    DEFAULT_NUM_QUESTIONS,
+    DEFAULT_QUESTION_LLM,
+)
 from src.core.graph.state import GEOState
 from src.core.graph.utils import (
     llm_response_model_to_dict,
@@ -29,9 +35,24 @@ def brand_context_generator_node(state: GEOState) -> dict:
     try:
         brand = state["brand"]
         openai_api_key = state.get("openai_api_key")
+        google_api_key = state.get("google_api_key")
         logger.info(f"Generating brand context for: {brand}")
 
-        context = generate_brand_context(brand, openai_api_key=openai_api_key)
+        if openai_api_key:
+            context_llm = DEFAULT_CONTEXT_LLM
+            llm_api_key = openai_api_key
+        elif google_api_key:
+            context_llm = DEFAULT_INTERNAL_GEMINI_LLM
+            llm_api_key = google_api_key
+        else:
+            context_llm = DEFAULT_CONTEXT_LLM
+            llm_api_key = None
+
+        context = generate_brand_context(
+            brand,
+            context_llm=context_llm,
+            openai_api_key=llm_api_key,
+        )
         state["brand_context"] = context or None
 
         if state["brand_context"]:
@@ -61,14 +82,26 @@ def question_generator_node(state: GEOState) -> dict:
     try:
         brand = state["brand"]
         openai_api_key = state.get("openai_api_key")
+        google_api_key = state.get("google_api_key")
         logger.info(f"Generating questions for brand: {brand}")
 
         brand_context = state.get("brand_context")
+        if openai_api_key:
+            question_llm = DEFAULT_QUESTION_LLM
+            llm_api_key = openai_api_key
+        elif google_api_key:
+            question_llm = DEFAULT_INTERNAL_GEMINI_LLM
+            llm_api_key = google_api_key
+        else:
+            question_llm = DEFAULT_QUESTION_LLM
+            llm_api_key = None
+
         questions = generate_questions(
             brand,
             num_questions=DEFAULT_NUM_QUESTIONS,
+            question_llm=question_llm,
             brand_context=brand_context,
-            openai_api_key=openai_api_key,
+            openai_api_key=llm_api_key,
         )
 
         state["questions"] = questions

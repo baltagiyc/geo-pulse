@@ -6,6 +6,7 @@ They can be overridden by API inputs or config mechanisms.
 """
 
 import os
+import tempfile
 
 DEFAULT_NUM_QUESTIONS = 2
 DEFAULT_MAX_SEARCH_RESULTS = 5
@@ -19,6 +20,8 @@ DEFAULT_QUESTION_LLM = "openai:gpt-4.1-mini"
 DEFAULT_CONTEXT_LLM = "openai:gpt-4.1-mini"
 DEFAULT_SIMULATION_LLM = "openai:gpt-5.2"
 DEFAULT_ANALYSIS_LLM = "openai:gpt-5.2"
+DEFAULT_INTERNAL_GEMINI_LLM = "google:gemini-2.5-flash"
+ACCESS_CODE_MAX_AUDITS = 3
 
 
 def get_openai_api_key() -> str:
@@ -68,6 +71,28 @@ def get_access_codes() -> set[str]:
     """
     raw_codes = os.getenv("ACCESS_CODES", "")
     return {code.strip() for code in raw_codes.split(",") if code.strip()}
+
+
+def get_access_code_max_audits() -> int:
+    """Return the maximum audits allowed per access code."""
+    raw_value = os.getenv("ACCESS_CODE_MAX_AUDITS")
+    if not raw_value:
+        return ACCESS_CODE_MAX_AUDITS
+    try:
+        value = int(raw_value)
+    except ValueError:
+        return ACCESS_CODE_MAX_AUDITS
+    return max(value, 0)
+
+
+def get_access_code_db_path() -> str:
+    """Return the SQLite path used for access code quotas."""
+    env_path = os.getenv("ACCESS_CODE_DB_PATH")
+    if env_path:
+        return env_path
+    if is_hf_space():
+        return "/data/geo_pulse_access_codes.db"
+    return os.path.join(tempfile.gettempdir(), "geo_pulse_access_codes.db")
 
 
 def is_hf_space() -> bool:

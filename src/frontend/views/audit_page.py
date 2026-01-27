@@ -44,7 +44,7 @@ def _render_access_sidebar() -> dict:
     valid_access_code = bool(access_code and access_code in access_codes)
     has_user_keys = bool(openai_api_key or google_api_key)
 
-    free_audits_limit = int(os.getenv("FREE_AUDITS_PER_CODE", "3"))
+    free_audits_limit = int(os.getenv("ACCESS_CODE_MAX_AUDITS", os.getenv("FREE_AUDITS_PER_CODE", "3")))
 
     if valid_access_code and not has_user_keys:
         if st.session_state.access_code != access_code:
