@@ -9,8 +9,8 @@ def render_audit_form() -> tuple[str, str, bool]:
 
     brand = st.text_input(
         "Brand name",
-        value="Nike",
-        help="Enter the brand to audit (e.g., Nike, Brevo, Amazon).",
+        placeholder="e.g., Nike, Brevo, Amazon",
+        help="Enter the brand to audit.",
     )
 
     llm_provider = st.selectbox(

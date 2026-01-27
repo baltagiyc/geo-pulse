@@ -71,19 +71,46 @@ def render_audit_page() -> None:
     """Render the main audit page."""
     _init_state()
 
-    st.title("GEO Pulse - Brand Audit")
+    st.title("GEO Pulse — Brand Audit")
+    st.markdown("### Stop being invisible to AI.")
+
     st.write(
-        "We audit your brand’s visibility on the LLM you select, then return a score and clear recommendations "
-        "on what content to create and where to publish it."
+        "GEO (Generative Engine Optimization) is the new SEO. "
+        "When users ask ChatGPT, Gemini, or Perplexity for recommendations, **does your brand show up?**"
     )
-    st.write(
-        "GEO (Generative Engine Optimization) is the practice of increasing a brand’s visibility in LLM responses."
+    st.write("We help you track and improve your AI visibility.")
+
+    # How it works section
+    st.subheader("How it works")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("**Audit**")
+        st.caption("We scan how your brand is perceived across the LLMs of your choice.")
+    with col2:
+        st.markdown("**Score**")
+        st.caption("You get a 'Visibility Score' comparing you to your competitors.")
+    with col3:
+        st.markdown("**Action**")
+        st.caption("We provide concrete content recommendations to improve your AI ranking.")
+
+    # Why it matters
+    st.info(
+        "**Why it matters:** Traditional search (SEO) is dying as users shift from Google to AI for answers. "
+        "AI-driven discovery is how your next customers will find you. "
+        "If you aren't in the AI's training data or context, you don't exist."
     )
-    st.write("Think of GEO as modern SEO for AI-driven discovery.")
-    st.write("Built for marketing teams to identify where and what to publish to improve AI visibility.")
-    st.caption(
-        "Tech stack: LangGraph, LangChain, FastAPI, Streamlit, Pydantic, Docker, Hugging Face, OpenAI, Gemini, uv, pytest, ruff"
-    )
+
+    # Engineering Excellence
+    with st.expander("🛠 Engineering Excellence (Production-Grade Specs)"):
+        st.write("Built for reliability and scale.")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("**Orchestration:** LangGraph, LangChain")
+            st.markdown("**Backend:** FastAPI, Pydantic, uv")
+        with c2:
+            st.markdown("**Deployment & Quality:** Docker, Pytest, Hugging Face, Ruff")
+            st.markdown("**Models & UI:** OpenAI, Gemini, Streamlit")
+    st.caption("Want free access? Request an access code by contacting yacin-christian-baltagi on LinkedIn.")
 
     access_info = None
     if is_hf_space():
@@ -94,11 +121,15 @@ def render_audit_page() -> None:
         submitted = st.form_submit_button("Run audit")
 
     if submitted:
+        if not brand:
+            st.error("Please enter a brand name.")
+            st.stop()
+
         st.session_state.audit_running = True
         st.session_state.audit_result = None
         st.session_state.audit_error = None
 
-        with st.spinner("Running audit... This may take a few minutes."):
+        with st.spinner("Running audit... This will take between 2 and 3 minutes."):
             try:
                 access_code = None
                 openai_api_key = None
