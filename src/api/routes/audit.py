@@ -86,8 +86,20 @@ async def audit_endpoint(request: AuditRequest) -> AuditResponse:
                 brand=request.brand,
                 llm_provider=request.llm_provider,
             )
+            invoke_config = None
+            if is_hf_space():
+                invoke_config = {
+                    "metadata": {
+                        "source": "hf_space",
+                        "brand": request.brand,
+                        "llm_provider": request.llm_provider,
+                        "using_access_code": bool(has_valid_access_code),
+                        "using_user_keys": bool(request.openai_api_key or request.google_api_key),
+                        "access_code": request.access_code if has_valid_access_code else None,
+                    }
+                }
 
-            final_state = graph.invoke(initial_state)
+            final_state = graph.invoke(initial_state, config=invoke_config)
         finally:
             reset_request_api_keys(tokens)
 

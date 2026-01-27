@@ -16,6 +16,9 @@ def render_details(result: dict) -> None:
     llm_errors = result.get("llm_errors") or []
 
     with st.expander("Questions", expanded=False):
+        st.info(
+            "These questions were generated based on the brand context to represent what real users might ask about your brand."
+        )
         if not questions:
             st.info("No questions available.")
         else:
@@ -29,6 +32,9 @@ def render_details(result: dict) -> None:
             st.write(brand_context)
 
     with st.expander("Search Results", expanded=False):
+        st.info(
+            "These are live web search results. We scan these sources to understand what the LLM 'sees' when it looks for your brand."
+        )
         if not search_results:
             st.info("No search results available.")
         else:
@@ -50,6 +56,9 @@ def render_details(result: dict) -> None:
                         st.write(snippet)
 
     with st.expander("LLM Responses", expanded=False):
+        st.info(
+            "These are the simulated responses you would get if you asked these questions directly on ChatGPT, Gemini, or Claude."
+        )
         if not llm_responses:
             st.info("No LLM responses available.")
         else:
