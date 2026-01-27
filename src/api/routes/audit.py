@@ -7,7 +7,8 @@ from fastapi import APIRouter, HTTPException, status
 from src.api.exceptions import format_error_message
 from src.api.schemas.request import AuditRequest
 from src.api.schemas.response import AuditResponse, SearchResultResponse
-from src.core.config import get_access_codes, is_hf_space
+from src.api.services.access_code_quota import consume_access_code_quota
+from src.core.config import get_access_code_max_audits, get_access_codes, is_hf_space
 from src.core.graph.graph import create_audit_graph, create_initial_state
 from src.core.graph.state import LLMResponse
 
@@ -56,6 +57,16 @@ async def audit_endpoint(request: AuditRequest) -> AuditResponse:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Missing OPENAI_API_KEY. Provide a valid access code or your own OpenAI API key.",
+                )
+        if has_valid_access_code and not request.openai_api_key and not request.google_api_key:
+            allowed, _remaining = consume_access_code_quota(
+                request.access_code,
+                get_access_code_max_audits(),
+            )
+            if not allowed:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Free quota reached. Please enter your own API keys to continue.",
                 )
 
         initial_state = create_initial_state(
