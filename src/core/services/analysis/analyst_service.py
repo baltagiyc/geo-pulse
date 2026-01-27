@@ -107,6 +107,7 @@ def analyze_brand_visibility(
     llm_responses: dict[str, dict],
     search_results: dict[str, list[dict]],
     analysis_llm: str | None = None,
+    analysis_api_key: str | None = None,
 ) -> tuple[float, list[Recommendation]]:
     """
     Analyze brand visibility based on LLM responses.
@@ -125,6 +126,7 @@ def analyze_brand_visibility(
         search_results: Dict mapping question to list of SearchResult dicts
         analysis_llm: Optional LLM specification in factory format (e.g., "openai:gpt-5.2", "google:gemini-3-pro").
                       If not provided, uses DEFAULT_ANALYSIS_LLM. If provided, uses the same LLM as simulation.
+        analysis_api_key: Optional API key override (OpenAI or Google depending on provider).
 
     Returns:
         Tuple of (reputation_score: float, recommendations: List[Recommendation])
@@ -135,7 +137,12 @@ def analyze_brand_visibility(
     """
     try:
         llm_spec = analysis_llm if analysis_llm else DEFAULT_ANALYSIS_LLM
-        llm = create_llm(llm_spec=llm_spec, temperature=ANALYSIS_LLM_TEMPERATURE)
+        llm_kwargs = {"api_key": analysis_api_key} if analysis_api_key else {}
+        llm = create_llm(
+            llm_spec=llm_spec,
+            temperature=ANALYSIS_LLM_TEMPERATURE,
+            **llm_kwargs,
+        )
 
         structured_llm = llm.with_structured_output(AnalysisResponse)
 

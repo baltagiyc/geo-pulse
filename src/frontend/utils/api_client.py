@@ -15,7 +15,14 @@ class APIError(Exception):
     detail: str
 
 
-def run_audit(brand: str, llm_provider: str, include_details: bool) -> dict:
+def run_audit(
+    brand: str,
+    llm_provider: str,
+    include_details: bool,
+    access_code: str | None = None,
+    openai_api_key: str | None = None,
+    google_api_key: str | None = None,
+) -> dict:
     """Call the /api/audit endpoint and return the result."""
     api_base_url = get_api_base_url()
     url = f"{api_base_url}/api/audit"
@@ -24,6 +31,9 @@ def run_audit(brand: str, llm_provider: str, include_details: bool) -> dict:
         "brand": brand,
         "llm_provider": llm_provider,
         "include_details": include_details,
+        "access_code": access_code,
+        "openai_api_key": openai_api_key,
+        "google_api_key": google_api_key,
     }
 
     with httpx.Client(timeout=300.0) as client:

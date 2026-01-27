@@ -78,15 +78,17 @@ def get_simulation_llm_for_provider(llm_provider: str) -> str:
         return default_llm
 
     if simulation_llm == "":
-        logger.info(
-            f"LLM provider '{llm_provider}' not yet implemented. Using default: '{default_llm}'"
-        )
+        logger.info(f"LLM provider '{llm_provider}' not yet implemented. Using default: '{default_llm}'")
         return default_llm
 
     return simulation_llm
 
 
-def create_llm(llm_spec: str = "openai:gpt-4o-mini", temperature: float = 0.7) -> BaseChatModel:
+def create_llm(
+    llm_spec: str = "openai:gpt-4o-mini",
+    temperature: float = 0.7,
+    api_key: str | None = None,
+) -> BaseChatModel:
     """
     Create an LLM instance based on provider and model specification.
 
@@ -96,6 +98,7 @@ def create_llm(llm_spec: str = "openai:gpt-4o-mini", temperature: float = 0.7) -
     Args:
         llm_spec: LLM specification in format "provider:model" (default: "openai:gpt-4o-mini")
         temperature: Temperature for the LLM (default: 0.7)
+        api_key: Optional API key override (OpenAI or Google depending on provider)
 
     Returns:
         BaseChatModel instance
@@ -110,9 +113,9 @@ def create_llm(llm_spec: str = "openai:gpt-4o-mini", temperature: float = 0.7) -
     provider, model = llm_spec.split(":", 1)
 
     if provider == "openai":
-        return _create_openai_llm(model, temperature)
+        return _create_openai_llm(model, temperature, api_key=api_key)
     elif provider == "google":
-        return _create_google_llm(model, temperature)
+        return _create_google_llm(model, temperature, api_key=api_key)
     elif provider == "mistral":
         # TODO: Implement Mistral support
         raise ValueError("Mistral provider not yet implemented. Supported providers: openai, google")
@@ -123,13 +126,14 @@ def create_llm(llm_spec: str = "openai:gpt-4o-mini", temperature: float = 0.7) -
         raise ValueError(f"Unsupported provider: {provider}. Supported providers: openai, google")
 
 
-def _create_openai_llm(model: str, temperature: float) -> ChatOpenAI:
+def _create_openai_llm(model: str, temperature: float, api_key: str | None = None) -> ChatOpenAI:
     """
     Create an OpenAI LLM instance.
 
     Args:
         model: OpenAI model name (e.g., "gpt-5.2", "gpt-5")
         temperature: Temperature for the LLM
+        api_key: Optional OpenAI API key override
 
     Returns:
         ChatOpenAI instance
@@ -137,19 +141,20 @@ def _create_openai_llm(model: str, temperature: float) -> ChatOpenAI:
     Raises:
         ValueError: If OPENAI_API_KEY is missing
     """
-    api_key = get_openai_api_key()
+    api_key = api_key or get_openai_api_key()
 
     logger.info(f"Creating OpenAI LLM: {model} (temperature={temperature})")
     return ChatOpenAI(model=model, temperature=temperature, api_key=api_key)
 
 
-def _create_google_llm(model: str, temperature: float) -> ChatGoogleGenerativeAI:
+def _create_google_llm(model: str, temperature: float, api_key: str | None = None) -> ChatGoogleGenerativeAI:
     """
     Create a Google Gemini LLM instance.
 
     Args:
         model: Google Gemini model name (e.g., "gemini-3-pro-preview", "gemini-3-flash-preview", "gemini-2.5-pro")
         temperature: Temperature for the LLM
+        api_key: Optional Google API key override
 
     Returns:
         ChatGoogleGenerativeAI instance
@@ -157,7 +162,7 @@ def _create_google_llm(model: str, temperature: float) -> ChatGoogleGenerativeAI
     Raises:
         ValueError: If GOOGLE_API_KEY is missing
     """
-    api_key = get_google_api_key()
+    api_key = api_key or get_google_api_key()
 
     logger.info(f"Creating Google Gemini LLM: {model} (temperature={temperature})")
     return ChatGoogleGenerativeAI(model=model, temperature=temperature, google_api_key=api_key)

@@ -36,6 +36,7 @@ def generate_questions(
     num_questions: int = DEFAULT_NUM_QUESTIONS,
     question_llm: str = DEFAULT_QUESTION_LLM,
     brand_context: str | None = None,
+    openai_api_key: str | None = None,
 ) -> list[str]:
     """
     Generate realistic questions about a brand using LLM.
@@ -57,7 +58,8 @@ def generate_questions(
         Exception: If LLM call fails after retries
     """
     try:
-        llm = create_llm(question_llm, temperature=QUESTION_LLM_TEMPERATURE)
+        llm_kwargs = {"api_key": openai_api_key} if openai_api_key else {}
+        llm = create_llm(question_llm, temperature=QUESTION_LLM_TEMPERATURE, **llm_kwargs)
 
         structured_llm = llm.with_structured_output(QuestionsResponse)
 

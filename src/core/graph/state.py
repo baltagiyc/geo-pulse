@@ -61,6 +61,8 @@ class GEOState(TypedDict):
     llm_provider: (
         str  # LLM where we wanna checke the visibility: "chatgpt", "gemini", "perplexity", etc. (default: "gpt-4")
     )
+    openai_api_key: str | None  # optional user-provided OpenAI API key
+    google_api_key: str | None  # optional user-provided Google API key
     # Note: search_tool is automatically determined from llm_provider (e.g., chatgpt -> bing, gemini -> google)
     # For now, we use Tavily as default for all LLMs. Future: implement proper LLM -> Search Tool mapping
 

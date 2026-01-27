@@ -9,8 +9,8 @@ project_root = Path(__file__).resolve().parents[2]
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from src.frontend.pages.audit import render_audit_page
-from src.frontend.pages.debug import render_debug_page
+from src.frontend.views.audit_page import render_audit_page
+from src.frontend.views.debug_page import render_debug_page
 
 
 def main() -> None:

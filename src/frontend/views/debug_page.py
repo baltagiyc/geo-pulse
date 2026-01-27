@@ -21,6 +21,7 @@ def render_debug_page() -> None:
     st.markdown(f"- OpenAPI JSON: {api_base_url}/openapi.json")
 
     st.subheader("Debug Endpoints")
+    st.markdown("- `/api/brand/context` — Generate brand context (node 0)")
     st.markdown("- `/api/questions/generate` — Generate questions (node 1)")
     st.markdown("- `/api/search/execute` — Run web search (node 2)")
     st.markdown("- `/api/llm/simulate` — Simulate LLM response (node 3)")
@@ -30,3 +31,7 @@ def render_debug_page() -> None:
         "Tip: Use the Swagger UI to copy outputs directly into the next endpoint. "
         "This mirrors the LangGraph workflow step by step."
     )
+
+
+if __name__ == "__main__":
+    render_debug_page()
