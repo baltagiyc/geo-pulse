@@ -73,9 +73,16 @@ def render_audit_page() -> None:
 
     st.title("GEO Pulse - Brand Audit")
     st.write(
-        "Run a full GEO audit using the LangGraph workflow. "
-        "The API generates questions, searches the web, simulates LLM responses, "
-        "and produces a visibility score with recommendations."
+        "We audit your brand’s visibility on the LLM you select, then return a score and clear recommendations "
+        "on what content to create and where to publish it."
+    )
+    st.write(
+        "GEO (Generative Engine Optimization) is the practice of increasing a brand’s visibility in LLM responses."
+    )
+    st.write("Think of GEO as modern SEO for AI-driven discovery.")
+    st.write("Built for marketing teams to identify where and what to publish to improve AI visibility.")
+    st.caption(
+        "Tech stack: LangGraph, LangChain, FastAPI, Streamlit, Pydantic, Docker, Hugging Face, OpenAI, Gemini, uv, pytest, ruff"
     )
 
     access_info = None

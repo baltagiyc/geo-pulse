@@ -31,7 +31,7 @@ def render_audit_form() -> tuple[str, str, bool]:
 
     include_details = st.checkbox(
         "Include details (questions, search results, LLM responses)",
-        value=False,
+        value=True,
         help="If enabled, detailed intermediate results will be shown below.",
     )
 
