@@ -19,6 +19,7 @@ from src.core.services.llm.brand_context_service import generate_brand_context
 from src.core.services.llm.llm_factory import get_simulation_llm_for_provider
 from src.core.services.llm.llm_simulator import simulate_llm_response
 from src.core.services.llm.question_generator import generate_questions
+from src.core.services.llm.request_context import get_request_api_keys
 from src.core.services.search.search_factory import create_search_tool, get_search_tool_for_llm
 
 logger = logging.getLogger(__name__)
@@ -34,8 +35,7 @@ def brand_context_generator_node(state: GEOState) -> dict:
     """
     try:
         brand = state["brand"]
-        openai_api_key = state.get("openai_api_key")
-        google_api_key = state.get("google_api_key")
+        openai_api_key, google_api_key = get_request_api_keys()
         logger.info(f"Generating brand context for: {brand}")
 
         if openai_api_key:
@@ -81,8 +81,7 @@ def question_generator_node(state: GEOState) -> dict:
     """
     try:
         brand = state["brand"]
-        openai_api_key = state.get("openai_api_key")
-        google_api_key = state.get("google_api_key")
+        openai_api_key, google_api_key = get_request_api_keys()
         logger.info(f"Generating questions for brand: {brand}")
 
         brand_context = state.get("brand_context")
@@ -179,8 +178,7 @@ def llm_simulator_node(state: GEOState) -> dict:
 
     llm_provider = state.get("llm_provider", "gpt-5.2")
     brand = state.get("brand", "")
-    openai_api_key = state.get("openai_api_key")
-    google_api_key = state.get("google_api_key")
+    openai_api_key, google_api_key = get_request_api_keys()
 
     for question in state.get("questions", []):
         try:
@@ -250,8 +248,7 @@ def response_analyst_node(state: GEOState) -> dict:
 
         llm_provider = state.get("llm_provider", "gpt-5.2")
         analysis_llm = get_simulation_llm_for_provider(llm_provider)
-        openai_api_key = state.get("openai_api_key")
-        google_api_key = state.get("google_api_key")
+        openai_api_key, google_api_key = get_request_api_keys()
         use_google_key = analysis_llm.startswith("google:")
         analysis_api_key = google_api_key if use_google_key else openai_api_key
 

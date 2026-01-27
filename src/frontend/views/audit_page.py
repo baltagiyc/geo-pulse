@@ -51,6 +51,8 @@ def _render_access_sidebar() -> dict:
             st.session_state.access_code = access_code
             st.session_state.audits_remaining = free_audits_limit
         st.sidebar.success(f"Access granted — {st.session_state.audits_remaining} audits left")
+    elif access_code and not has_user_keys:
+        st.sidebar.warning("Access code will be validated by the server when you run an audit.")
     elif has_user_keys:
         st.sidebar.info("Using your own API keys (unlimited usage)")
     else:
@@ -96,11 +98,11 @@ def render_audit_page() -> None:
                 google_api_key = None
 
                 if is_hf_space() and access_info:
-                    access_code = access_info["access_code"] if access_info["valid_access_code"] else None
+                    access_code = access_info["access_code"] or None
                     openai_api_key = access_info["openai_api_key"] or None
                     google_api_key = access_info["google_api_key"] or None
 
-                    if not access_info["valid_access_code"] and not access_info["has_user_keys"]:
+                    if not access_code and not access_info["has_user_keys"]:
                         raise APIError(
                             status_code=400,
                             detail="Access required: enter a valid access code or your own API keys.",

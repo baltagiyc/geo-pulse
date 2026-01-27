@@ -11,6 +11,7 @@ from src.api.services.access_code_quota import consume_access_code_quota
 from src.core.config import get_access_code_max_audits, get_access_codes, is_hf_space
 from src.core.graph.graph import create_audit_graph, create_initial_state
 from src.core.graph.state import LLMResponse
+from src.core.services.llm.request_context import reset_request_api_keys, set_request_api_keys
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,16 @@ async def audit_endpoint(request: AuditRequest) -> AuditResponse:
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Missing OPENAI_API_KEY. Provide a valid access code or your own OpenAI API key.",
                 )
+        if (
+            request.access_code
+            and not has_valid_access_code
+            and not request.openai_api_key
+            and not request.google_api_key
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid access code. Provide a valid access code or your own API keys.",
+            )
         if has_valid_access_code and not request.openai_api_key and not request.google_api_key:
             allowed, _remaining = consume_access_code_quota(
                 request.access_code,
@@ -69,14 +80,16 @@ async def audit_endpoint(request: AuditRequest) -> AuditResponse:
                     detail="Free quota reached. Please enter your own API keys to continue.",
                 )
 
-        initial_state = create_initial_state(
-            brand=request.brand,
-            llm_provider=request.llm_provider,
-            openai_api_key=request.openai_api_key,
-            google_api_key=request.google_api_key,
-        )
+        tokens = set_request_api_keys(request.openai_api_key, request.google_api_key)
+        try:
+            initial_state = create_initial_state(
+                brand=request.brand,
+                llm_provider=request.llm_provider,
+            )
 
-        final_state = graph.invoke(initial_state)
+            final_state = graph.invoke(initial_state)
+        finally:
+            reset_request_api_keys(tokens)
 
         reputation_score = final_state.get("reputation_score", 0.0)
         recommendations = final_state.get("recommendations", [])
@@ -124,6 +137,8 @@ async def audit_endpoint(request: AuditRequest) -> AuditResponse:
 
         return AuditResponse(**response_data)
 
+    except HTTPException:
+        raise
     except ValueError as e:
         error_msg = format_error_message(e, "audit")
         logger.error(f"Invalid request for audit: {error_msg}")
