@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.api.exceptions import format_error_message
 from src.api.schemas.request import (
@@ -20,6 +20,7 @@ from src.api.schemas.response import (
     SearchExecuteResponse,
     SearchResultResponse,
 )
+from src.core.config import is_hf_space
 from src.core.graph.state import SearchResult
 from src.core.services.analysis.analyst_service import analyze_brand_visibility
 from src.core.services.llm.brand_context_service import generate_brand_context
@@ -29,7 +30,16 @@ from src.core.services.search.search_factory import create_search_tool
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+
+def _block_debug_on_hf() -> None:
+    if is_hf_space():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Debug endpoints are disabled on Hugging Face Spaces, only available in local dev",
+        )
+
+
+router = APIRouter(dependencies=[Depends(_block_debug_on_hf)])
 
 
 @router.post("/questions/generate", response_model=QuestionGenerateResponse, tags=["debug"])

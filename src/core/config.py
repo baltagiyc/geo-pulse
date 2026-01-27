@@ -19,6 +19,7 @@ DEFAULT_QUESTION_LLM = "openai:gpt-4.1-mini"
 DEFAULT_CONTEXT_LLM = "openai:gpt-4.1-mini"
 DEFAULT_SIMULATION_LLM = "openai:gpt-5.2"
 DEFAULT_ANALYSIS_LLM = "openai:gpt-5.2"
+DEFAULT_INTERNAL_GEMINI_LLM = "google:gemini-2.5-flash"
 
 
 def get_openai_api_key() -> str:
