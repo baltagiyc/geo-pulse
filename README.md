@@ -14,6 +14,11 @@ pinned: false
 
 GEO Pulse is a brand audit application for **GEO (Generative Engine Optimization)**. It evaluates a brand's visibility in LLM responses (ChatGPT, Gemini, Perplexity, etc.) and generates strategic recommendations to improve this visibility.
 
+### Live Demo
+The application is publicly available on Hugging Face Spaces:
+**[GEO Pulse on Hugging Face](https://huggingface.co/spaces/baltagiyc/geo-visibility-audit)**
+*(Note: You will need an access code to run an audit. Contact Yacin-Christian-Baltagi on LinkedIn to request one.)*
+
 ### How It Works
 
 1. **Brand Context Generation**: Generates factual context about the brand (especially useful for less-known brands to prevent hallucinations)
@@ -106,17 +111,3 @@ uv run uvicorn src.api.main:app --reload
 uv run streamlit run src/frontend/app.py
 ```
 
-### Tests
-
-```bash
-# Unit tests (with mocks, fast)
-uv run pytest tests/unit/ -v
-
-
-## Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Tests must pass (pre-commit + CI/CD)
-4. Create a Pull Request to main
-5. CI/CD must pass before merge is authorized

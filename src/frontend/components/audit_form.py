@@ -13,20 +13,32 @@ def render_audit_form() -> tuple[str, str, bool]:
         help="Enter the brand to audit.",
     )
 
+    llm_display_labels = {
+        "gpt-5.2-pro": "ChatGPT Pro — highest quality (GPT-5.2 Pro)",
+        "gpt-5.2": "ChatGPT Free/Plus — flagship (GPT-5.2)",
+        "o3": "ChatGPT Reasoning — advanced (o3)",
+        "gemini-pro": "Gemini Pro — highest quality (gemini-3-pro)",
+        "gemini-flash": "Gemini Flash — fastest (gemini-3-flash)",
+        "gemini-reasoning": "Gemini Reasoning — stable (gemini-2.5-pro)",
+    }
+
+    llm_provider_options = list(llm_display_labels.keys())
+    default_index = llm_provider_options.index("gemini-pro")
+
     llm_provider = st.selectbox(
         "LLM provider",
-        options=[
-            "gpt-5.2",  # Latest (2025)
-            "gpt-5",
-            "gpt-4.1",  # API-optimized
-            "gpt-4",
-            "gemini",  # Gemini Pro (default)
-            "gemini-pro",  # Gemini Pro (explicit)
-            "gemini-flash",  # Gemini Flash (fast)
-            "gemini-reasoning",  # Gemini Reasoning (advanced thinking)
-        ],
-        index=0,  # Default to gpt-5.2 (latest)
-        help="Select the LLM provider to simulate. Supports ChatGPT (GPT-5.2, GPT-5) and Gemini (Pro, Flash, Reasoning) models.",
+        options=llm_provider_options,
+        index=default_index,  # Default to Gemini Pro
+        format_func=lambda key: llm_display_labels.get(key, key),
+        help=(
+            "Pick the LLM to simulate. ChatGPT options include flagship and reasoning modes; "
+            "Gemini options include Pro and Flash."
+        ),
+    )
+
+    st.caption(
+        "Note on speed: 'Highest quality' models (Pro) provide deeper analysis but "
+        "can take 2–5 minutes. 'Fastest' models (Flash, Reasoning, Free/Plus) usually complete in about 1 minute."
     )
 
     include_details = st.checkbox(

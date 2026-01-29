@@ -27,15 +27,20 @@ logger = logging.getLogger(__name__)
 # This ensures we convert user-friendly names (e.g., "gpt-4", "gemini") to factory format (e.g., "openai:gpt-4")
 LLM_PROVIDER_TO_FACTORY_MAPPING = {
     # OpenAI models (latest first)
-    "gpt-5.2": "openai:gpt-5.2",  # Latest model (2025)
-    "gpt-5": "openai:gpt-5",  # Advanced model with reasoning capabilities
-    "gpt-4.1": "openai:gpt-4.1",  # API-optimized model (better than GPT-4o)
+    "gpt-5.2-pro": "openai:gpt-5.2-pro",  # ChatGPT Pro mode (Max reasoning)
+    "gpt-5.2": "openai:gpt-5.2",  # ChatGPT Plus/Free mode (Flagship model)
+    "gpt-5.1": "openai:gpt-5.1",  # High-performance 2025 model
+    "gpt-5": "openai:gpt-5",  # Advanced reasoning 2025 model
+    "o3": "openai:o3",  # Latest reasoning model (Plus/Pro)
+    "o1": "openai:o1",  # OpenAI's primary reasoning model
+    "gpt-4.5": "openai:gpt-4.5",  # API-optimized previous generation
+    "gpt-4.1": "openai:gpt-4.1",  # API-optimized previous generation
     "gpt-4.1-mini": "openai:gpt-4.1-mini",  # Lightweight API-optimized model
-    "gpt-4o": "openai:gpt-4o",  # Flagship model with multimodal support
-    "gpt-4o-mini": "openai:gpt-4o-mini",  # Lightweight version
-    "chatgpt": "openai:gpt-5.2",  # Default ChatGPT experience (uses latest model)
-    "gpt-4": "openai:gpt-4",  # Previous high-intelligence model
-    "gpt-3.5-turbo": "openai:gpt-3.5-turbo",  # Fast model for routine tasks
+    "gpt-4o": "openai:gpt-4o",  # Classic flagship
+    "gpt-4o-mini": "openai:gpt-4o-mini",
+    "chatgpt": "openai:gpt-5.2",
+    "gpt-4": "openai:gpt-4",
+    "gpt-3.5-turbo": "openai:gpt-3.5-turbo",
     "gemini": "google:gemini-3-pro-preview",  # Default Gemini (Pro mode - most intelligent, Dec 2025)
     "gemini-pro": "google:gemini-3-pro-preview",  # Pro mode - most intelligent model
     "gemini-3-pro": "google:gemini-3-pro-preview",  # Pro mode - most intelligent model
@@ -142,6 +147,13 @@ def _create_openai_llm(model: str, temperature: float, api_key: str | None = Non
         ValueError: If OPENAI_API_KEY is missing
     """
     api_key = api_key or get_openai_api_key()
+
+    # Reasoning models (o1, o3, etc.) do not support the temperature parameter
+    is_reasoning_model = model.startswith("o1") or model.startswith("o3")
+
+    if is_reasoning_model:
+        logger.info(f"Creating OpenAI Reasoning LLM: {model} (temperature omitted)")
+        return ChatOpenAI(model=model, api_key=api_key)
 
     logger.info(f"Creating OpenAI LLM: {model} (temperature={temperature})")
     return ChatOpenAI(model=model, temperature=temperature, api_key=api_key)
