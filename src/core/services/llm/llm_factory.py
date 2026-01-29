@@ -148,6 +148,13 @@ def _create_openai_llm(model: str, temperature: float, api_key: str | None = Non
     """
     api_key = api_key or get_openai_api_key()
 
+    # Reasoning models (o1, o3, etc.) do not support the temperature parameter
+    is_reasoning_model = model.startswith("o1") or model.startswith("o3")
+
+    if is_reasoning_model:
+        logger.info(f"Creating OpenAI Reasoning LLM: {model} (temperature omitted)")
+        return ChatOpenAI(model=model, api_key=api_key)
+
     logger.info(f"Creating OpenAI LLM: {model} (temperature={temperature})")
     return ChatOpenAI(model=model, temperature=temperature, api_key=api_key)
 

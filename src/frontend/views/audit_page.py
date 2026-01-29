@@ -1,6 +1,7 @@
 """Audit page for GEO Pulse."""
 
 import os
+import time
 
 import streamlit as st
 
@@ -80,7 +81,17 @@ def render_audit_page() -> None:
         "GEO (Generative Engine Optimization) is the new SEO. "
         "When users ask ChatGPT, Gemini, or Perplexity for recommendations, **does your brand show up?**"
     )
-    st.write("We help you track and improve your AI visibility.")
+
+    st.write(
+        "Built for marketing teams to improve brand visibility in AI, with recommendations on what content to "
+        "create and where to publish it."
+    )
+
+    # Why it matters
+    st.info(
+        "**Why it matters:** Traditional search (SEO) is dying. Yesterday people searched on Google; today they ask "
+        "ChatGPT. If you aren't in the AI's training data or context, you don't exist."
+    )
 
     # How it works section
     st.subheader("How it works")
@@ -95,13 +106,6 @@ def render_audit_page() -> None:
         st.markdown("**Action**")
         st.caption("We provide concrete content recommendations to improve your AI ranking.")
 
-    # Why it matters
-    st.info(
-        "**Why it matters:** Traditional search (SEO) is dying as users shift from Google to AI for answers. "
-        "AI-driven discovery is how your next customers will find you. "
-        "If you aren't in the AI's training data or context, you don't exist."
-    )
-
     # Engineering Excellence
     with st.expander("🛠 Engineering Excellence (Production-Grade Specs)"):
         st.write("Built for reliability and scale.")
@@ -110,9 +114,9 @@ def render_audit_page() -> None:
             st.markdown("**Orchestration:** LangGraph, LangChain")
             st.markdown("**Backend:** FastAPI, Pydantic, uv")
         with c2:
-            st.markdown("**Deployment & Quality:** Docker, Pytest, Hugging Face, Ruff")
+            st.markdown("**Deployment & Quality:** Docker, Pytest, Hugging Face, Ruff, CI/CD")
             st.markdown("**Models & UI:** OpenAI, Gemini, Streamlit")
-    st.caption("Want free access? Request an access code by contacting yacin-christian-baltagi on LinkedIn.")
+    st.write("Want free access? Request an access code by contacting yacin-christian-baltagi on LinkedIn.")
 
     access_info = None
     if is_hf_space():
@@ -131,8 +135,9 @@ def render_audit_page() -> None:
         st.session_state.audit_result = None
         st.session_state.audit_error = None
 
-        with st.spinner("Running audit... This will take between 2 and 3 minutes."):
+        with st.spinner("Running audit... This will take few minutes"):
             try:
+                start_time = time.perf_counter()
                 access_code = None
                 openai_api_key = None
                 google_api_key = None
@@ -165,6 +170,7 @@ def render_audit_page() -> None:
                     openai_api_key=openai_api_key,
                     google_api_key=google_api_key,
                 )
+                result["execution_time_seconds"] = time.perf_counter() - start_time
                 st.session_state.audit_result = result
             except APIError as exc:
                 st.session_state.audit_error = exc.detail

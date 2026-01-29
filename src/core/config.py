@@ -31,7 +31,7 @@ def _get_env_float(key: str, default: float) -> float:
         return default
 
 
-DEFAULT_NUM_QUESTIONS = _get_env_int("DEFAULT_NUM_QUESTIONS", 2)
+DEFAULT_NUM_QUESTIONS = _get_env_int("DEFAULT_NUM_QUESTIONS", 3)
 DEFAULT_MAX_SEARCH_RESULTS = _get_env_int("DEFAULT_MAX_SEARCH_RESULTS", 5)
 
 QUESTION_LLM_TEMPERATURE = _get_env_float("QUESTION_LLM_TEMPERATURE", 0.7)
