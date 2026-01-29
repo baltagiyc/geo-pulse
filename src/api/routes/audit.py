@@ -52,12 +52,12 @@ async def audit_endpoint(request: AuditRequest) -> AuditResponse:
             if is_gemini and not request.google_api_key:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Missing GOOGLE_API_KEY. Provide a valid access code or your own Google API key.",
+                    detail="Access required: enter a valid access code.",
                 )
             if not is_gemini and not request.openai_api_key:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Missing OPENAI_API_KEY. Provide a valid access code or your own OpenAI API key.",
+                    detail="Access required: enter a valid access code.",
                 )
         if (
             request.access_code
@@ -67,7 +67,7 @@ async def audit_endpoint(request: AuditRequest) -> AuditResponse:
         ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Invalid access code. Provide a valid access code or your own API keys.",
+                detail="Invalid access code.",
             )
         if has_valid_access_code and not request.openai_api_key and not request.google_api_key:
             allowed, _remaining = consume_access_code_quota(
@@ -77,7 +77,7 @@ async def audit_endpoint(request: AuditRequest) -> AuditResponse:
             if not allowed:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Free quota reached. Please enter your own API keys to continue.",
+                    detail="Free quota reached for this access code. Contact Yacin-Christian-Baltagi on LinkedIn for more.",
                 )
 
         tokens = set_request_api_keys(request.openai_api_key, request.google_api_key)

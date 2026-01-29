@@ -32,31 +32,33 @@ def _get_access_codes() -> set[str]:
 
 
 def _render_access_sidebar() -> dict:
-    """Render access code / API key inputs in the sidebar."""
-    st.sidebar.header("Access & API Keys")
-    st.sidebar.caption("Enter an access code to use the demo keys, or provide your own API keys for unlimited usage.")
+    """Render access code input in the sidebar."""
+    st.sidebar.header("Access Control")
+    st.sidebar.caption("This tool is in private access. Enter an access code to run the audit.")
 
     access_code = st.sidebar.text_input("Access code", type="password").strip()
-    openai_api_key = st.sidebar.text_input("OpenAI API key (optional)", type="password").strip()
-    google_api_key = st.sidebar.text_input("Google API key (optional)", type="password").strip()
+
+    # API key inputs are removed on HF Spaces to prioritize lead generation
+    openai_api_key = ""
+    google_api_key = ""
 
     access_codes = _get_access_codes()
     valid_access_code = bool(access_code and access_code in access_codes)
-    has_user_keys = bool(openai_api_key or google_api_key)
+    has_user_keys = False  # Always False on HF Spaces now
 
     free_audits_limit = int(os.getenv("ACCESS_CODE_MAX_AUDITS", os.getenv("FREE_AUDITS_PER_CODE", "3")))
 
-    if valid_access_code and not has_user_keys:
+    if valid_access_code:
         if st.session_state.access_code != access_code:
             st.session_state.access_code = access_code
             st.session_state.audits_remaining = free_audits_limit
         st.sidebar.success(f"Access granted — {st.session_state.audits_remaining} audits left")
-    elif access_code and not has_user_keys:
+    elif access_code:
         st.sidebar.warning("Access code will be validated by the server when you run an audit.")
-    elif has_user_keys:
-        st.sidebar.info("Using your own API keys (unlimited usage)")
     else:
-        st.sidebar.warning("Enter an access code or your own API keys to run an audit.")
+        st.sidebar.warning("Enter an access code to run an audit.")
+
+    st.sidebar.info("Want a free access code? Contact Yacin-Christian-Baltagi on LinkedIn.")
 
     return {
         "access_code": access_code,
@@ -140,18 +142,18 @@ def render_audit_page() -> None:
                     openai_api_key = access_info["openai_api_key"] or None
                     google_api_key = access_info["google_api_key"] or None
 
-                    if not access_code and not access_info["has_user_keys"]:
+                    if not access_code:
                         raise APIError(
                             status_code=400,
-                            detail="Access required: enter a valid access code or your own API keys.",
+                            detail="Access required: enter a valid access code.",
                         )
 
-                    if access_info["valid_access_code"] and not access_info["has_user_keys"]:
+                    if access_info["valid_access_code"]:
                         remaining = st.session_state.audits_remaining or 0
                         if remaining <= 0:
                             raise APIError(
                                 status_code=400,
-                                detail="Free quota reached. Please enter your own API keys to continue.",
+                                detail="Free quota reached for this access code. Contact Yacin for more.",
                             )
                         st.session_state.audits_remaining = max(remaining - 1, 0)
 
