@@ -8,20 +8,44 @@ They can be overridden by API inputs or config mechanisms.
 import os
 import tempfile
 
-DEFAULT_NUM_QUESTIONS = 2
-DEFAULT_MAX_SEARCH_RESULTS = 5
 
-QUESTION_LLM_TEMPERATURE = 0.7
-SIMULATION_LLM_TEMPERATURE = 0.7
-CONTEXT_LLM_TEMPERATURE = 0.3
-ANALYSIS_LLM_TEMPERATURE = 0.3
+def _get_env_int(key: str, default: int) -> int:
+    """Helper to read integer from environment."""
+    raw = os.getenv(key)
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
 
-DEFAULT_QUESTION_LLM = "openai:gpt-4.1-mini"
-DEFAULT_CONTEXT_LLM = "openai:gpt-4.1-mini"
-DEFAULT_SIMULATION_LLM = "openai:gpt-5.2"
-DEFAULT_ANALYSIS_LLM = "openai:gpt-5.2"
-DEFAULT_INTERNAL_GEMINI_LLM = "google:gemini-2.5-flash"
-ACCESS_CODE_MAX_AUDITS = 3
+
+def _get_env_float(key: str, default: float) -> float:
+    """Helper to read float from environment."""
+    raw = os.getenv(key)
+    if not raw:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
+DEFAULT_NUM_QUESTIONS = _get_env_int("DEFAULT_NUM_QUESTIONS", 2)
+DEFAULT_MAX_SEARCH_RESULTS = _get_env_int("DEFAULT_MAX_SEARCH_RESULTS", 5)
+
+QUESTION_LLM_TEMPERATURE = _get_env_float("QUESTION_LLM_TEMPERATURE", 0.7)
+SIMULATION_LLM_TEMPERATURE = _get_env_float("SIMULATION_LLM_TEMPERATURE", 0.7)
+CONTEXT_LLM_TEMPERATURE = _get_env_float("CONTEXT_LLM_TEMPERATURE", 0.3)
+ANALYSIS_LLM_TEMPERATURE = _get_env_float("ANALYSIS_LLM_TEMPERATURE", 0.3)
+
+DEFAULT_QUESTION_LLM = os.getenv("DEFAULT_QUESTION_LLM", "openai:gpt-4.1-mini")
+DEFAULT_CONTEXT_LLM = os.getenv("DEFAULT_CONTEXT_LLM", "openai:gpt-4.1-mini")
+DEFAULT_SIMULATION_LLM = os.getenv("DEFAULT_SIMULATION_LLM", "openai:gpt-5.2")
+DEFAULT_ANALYSIS_LLM = os.getenv("DEFAULT_ANALYSIS_LLM", "openai:gpt-5.2")
+DEFAULT_INTERNAL_GEMINI_LLM = os.getenv("DEFAULT_INTERNAL_GEMINI_LLM", "google:gemini-2.5-flash")
+
+ACCESS_CODE_MAX_AUDITS_DEFAULT = 3
 
 
 def get_openai_api_key() -> str:
@@ -77,11 +101,11 @@ def get_access_code_max_audits() -> int:
     """Return the maximum audits allowed per access code."""
     raw_value = os.getenv("ACCESS_CODE_MAX_AUDITS")
     if not raw_value:
-        return ACCESS_CODE_MAX_AUDITS
+        return ACCESS_CODE_MAX_AUDITS_DEFAULT
     try:
         value = int(raw_value)
     except ValueError:
-        return ACCESS_CODE_MAX_AUDITS
+        return ACCESS_CODE_MAX_AUDITS_DEFAULT
     return max(value, 0)
 
 

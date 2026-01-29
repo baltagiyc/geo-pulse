@@ -16,17 +16,16 @@ def render_audit_form() -> tuple[str, str, bool]:
     llm_provider = st.selectbox(
         "LLM provider",
         options=[
-            "gpt-5.2",  # Latest (2025)
-            "gpt-5",
-            "gpt-4.1",  # API-optimized
-            "gpt-4",
-            "gemini",  # Gemini Pro (default)
-            "gemini-pro",  # Gemini Pro (explicit)
-            "gemini-flash",  # Gemini Flash (fast)
-            "gemini-reasoning",  # Gemini Reasoning (advanced thinking)
+            "gpt-5.2-pro",  # ChatGPT Pro (Highest Reasoning)
+            "gpt-5.2",  # ChatGPT Plus/Free (Flagship)
+            "o3",  # Advanced Reasoning
+            "gpt-4.5",  # API Optimized
+            "gemini-3-pro",  # Gemini Pro (Intelligence)
+            "gemini-3-flash",  # Gemini Flash (Speed)
+            "gemini-2.5-pro",  # Stable reasoning mode
         ],
-        index=0,  # Default to gpt-5.2 (latest)
-        help="Select the LLM provider to simulate. Supports ChatGPT (GPT-5.2, GPT-5) and Gemini (Pro, Flash, Reasoning) models.",
+        index=1,  # Default to gpt-5.2 (Flagship)
+        help="Select the LLM provider to simulate. Supports ChatGPT (GPT-5.2 Pro/Plus) and Gemini (Pro, Flash, Reasoning) models.",
     )
 
     include_details = st.checkbox(
