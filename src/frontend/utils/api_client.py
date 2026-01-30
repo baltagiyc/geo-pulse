@@ -36,7 +36,7 @@ def run_audit(
         "google_api_key": google_api_key,
     }
 
-    with httpx.Client(timeout=300.0) as client:
+    with httpx.Client(timeout=600.0) as client:
         response = client.post(url, json=payload)
 
     if response.status_code >= 400:
