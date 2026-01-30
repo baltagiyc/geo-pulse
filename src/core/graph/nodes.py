@@ -95,9 +95,15 @@ def question_generator_node(state: GEOState) -> dict:
             question_llm = DEFAULT_QUESTION_LLM
             llm_api_key = None
 
+        # Force 2 questions for GPT-5.2 Pro to optimize cost and time
+        num_questions = DEFAULT_NUM_QUESTIONS
+        if state.get("llm_provider") == "gpt-5.2-pro":
+            logger.info("Forcing 2 questions for GPT-5.2 Pro")
+            num_questions = 2
+
         questions = generate_questions(
             brand,
-            num_questions=DEFAULT_NUM_QUESTIONS,
+            num_questions=num_questions,
             question_llm=question_llm,
             brand_context=brand_context,
             openai_api_key=llm_api_key,
