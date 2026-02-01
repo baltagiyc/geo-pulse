@@ -24,6 +24,10 @@ def render_summary(result: dict) -> None:
 
     with col_left:
         st.metric("Reputation Score", f"{display_score:.2f}")
+        st.caption(
+            "Score derived from simulated LLM answers: brand visibility, source citations, and competitor "
+            "comparisons across the generated questions."
+        )
 
         # Determine color based on score
         if display_score < 0.40:
