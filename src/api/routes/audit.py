@@ -113,6 +113,7 @@ async def audit_endpoint(request: AuditRequest) -> AuditResponse:
             "recommendations": recommendations,
             "brand": request.brand,
             "num_questions": num_questions,
+            "llm_provider": request.llm_provider,
         }
 
         if request.include_details:

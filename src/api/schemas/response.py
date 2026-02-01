@@ -31,6 +31,9 @@ class AuditResponse(BaseModel):
         description="List of recommendations to improve brand visibility (GEO-focused)."
     )
     brand: str = Field(description="Brand name that was audited")
+    llm_provider: str | None = Field(
+        default=None, description="LLM provider used for the audit (e.g., gpt-5.2, gemini-pro)."
+    )
     num_questions: int = Field(description="Number of questions that were generated and analyzed")
 
     questions: list[str] | None = Field(

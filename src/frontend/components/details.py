@@ -11,9 +11,30 @@ def render_details(result: dict) -> None:
     search_results = result.get("search_results") or {}
     llm_responses = result.get("llm_responses") or {}
     brand_context = result.get("brand_context") or ""
+    brand = result.get("brand", "your brand")
+    llm_provider = result.get("llm_provider")
+
+    if llm_provider:
+        llm_clause = f"Next, we submit those questions to **{llm_provider}** exactly as a user would. "
+    else:
+        llm_clause = "Next, we submit those questions to the chosen model exactly as a user would. "
+
+    st.caption(
+        "The algorithm follows a multi-step graph before producing the results you just read above. First, we collect "
+        f"factual context about the brand (critical for smaller brands to prevent hallucinations). Then we simulate "
+        f"the questions real users might ask about **{brand}**. "
+        f"{llm_clause}"
+        "Finally, all signals gathered across the process are analyzed to produce the recommendations above."
+    )
     errors = result.get("errors") or []
     search_errors = result.get("search_errors") or []
     llm_errors = result.get("llm_errors") or []
+
+    with st.expander("Brand Context", expanded=False):
+        if not brand_context:
+            st.info("No brand context available.")
+        else:
+            st.write(brand_context)
 
     with st.expander("Questions", expanded=False):
         st.info(
@@ -24,12 +45,6 @@ def render_details(result: dict) -> None:
         else:
             for q in questions:
                 st.write(f"- {q}")
-
-    with st.expander("Brand Context", expanded=False):
-        if not brand_context:
-            st.info("No brand context available.")
-        else:
-            st.write(brand_context)
 
     with st.expander("Search Results", expanded=False):
         st.info(
