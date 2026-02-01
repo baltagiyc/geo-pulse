@@ -24,6 +24,10 @@ def render_summary(result: dict) -> None:
 
     with col_left:
         st.metric("Reputation Score", f"{display_score:.2f}")
+        st.caption(
+            "Score derived from simulated LLM answers: brand visibility, source citations, and competitor "
+            "comparisons across the generated questions."
+        )
 
         # Determine color based on score
         if display_score < 0.40:
@@ -101,6 +105,7 @@ def render_summary(result: dict) -> None:
     for idx, rec in enumerate(ordered, start=1):
         priority_raw = rec.get("priority", "medium")
         priority = priority_raw.capitalize()
+        title = rec.get("title", "").strip()
         description = rec.get("description", "")
 
         badge_class = "gp-badge-medium"
@@ -109,8 +114,9 @@ def render_summary(result: dict) -> None:
         elif priority_raw.lower() == "low":
             badge_class = "gp-badge-low"
 
+        title_fragment = f" — {title}" if title else ""
         st.markdown(
-            f'<span class="gp-badge {badge_class}">{priority}</span> ' f"**Recommendation {idx}**",
+            f'<span class="gp-badge {badge_class}">{priority}</span> ' f"**Recommendation {idx}{title_fragment}**",
             unsafe_allow_html=True,
         )
         if description:
