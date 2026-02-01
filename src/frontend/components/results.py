@@ -101,6 +101,7 @@ def render_summary(result: dict) -> None:
     for idx, rec in enumerate(ordered, start=1):
         priority_raw = rec.get("priority", "medium")
         priority = priority_raw.capitalize()
+        title = rec.get("title", "").strip()
         description = rec.get("description", "")
 
         badge_class = "gp-badge-medium"
@@ -109,8 +110,9 @@ def render_summary(result: dict) -> None:
         elif priority_raw.lower() == "low":
             badge_class = "gp-badge-low"
 
+        title_fragment = f" — {title}" if title else ""
         st.markdown(
-            f'<span class="gp-badge {badge_class}">{priority}</span> ' f"**Recommendation {idx}**",
+            f'<span class="gp-badge {badge_class}">{priority}</span> ' f"**Recommendation {idx}{title_fragment}**",
             unsafe_allow_html=True,
         )
         if description:
